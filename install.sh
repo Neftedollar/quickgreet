@@ -40,22 +40,32 @@ install -d "$QML_DIR" "$SCRIPT_DIR" "$CONF_DIR"
 install -m 0644 "$here"/qml/*.qml "$QML_DIR/"
 install -m 0755 "$here"/scripts/*.py "$here"/scripts/*.sh "$SCRIPT_DIR/"
 
-# Configuration is never overwritten: an upgrade must not silently discard
-# whatever the administrator set up.
-for f in config.example.json greetd-test.toml hyprland.conf; do
+# Templates shipped with the project are always refreshed. They are ours,
+# not the administrator's, and silently keeping a stale copy means fixes
+# never reach an existing install — including fixes to the very files that
+# decide whether the greeter can start at all. A modified copy is moved
+# aside rather than destroyed.
+for f in config.example.json greetd-test.toml greetd-config.toml hyprland.conf; do
     src="$here/config/$f"
     dst="$CONF_DIR/$f"
-    if [ -e "$dst" ]; then
-        echo "  keeping existing $dst"
+
+    if [ -e "$dst" ] && ! cmp -s "$src" "$dst"; then
+        cp -a "$dst" "$dst.bak"
+        echo "  updated $dst (previous kept as $dst.bak)"
     else
-        install -m 0644 "$src" "$dst"
         echo "  installed $dst"
     fi
+
+    install -m 0644 "$src" "$dst"
 done
 
+# config.json is the one file that genuinely belongs to the administrator,
+# so it is only ever created, never replaced.
 if [ ! -e "$CONF_DIR/config.json" ]; then
     install -m 0644 "$here/config/config.example.json" "$CONF_DIR/config.json"
     echo "  installed $CONF_DIR/config.json"
+else
+    echo "  keeping existing $CONF_DIR/config.json"
 fi
 
 # The greeter runs as an unprivileged user and must be able to read all
