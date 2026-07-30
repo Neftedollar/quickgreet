@@ -7,8 +7,8 @@ import Quickshell.Io
 // quickgreet — a greetd greeter built on Quickshell.
 //
 // Run against the real greetd protocol by launching this config from a
-// greetd session; run ./test.sh for a mock mode that exercises the whole
-// UI and protocol flow without performing an actual login.
+// greetd session; run ./test.sh for a mock mode that exercises the UI
+// without performing an actual login.
 ShellRoot {
     id: shell
 
@@ -21,7 +21,6 @@ ShellRoot {
         color: Colours.m3background
         visible: true
 
-        // Smaller in mock mode so it does not blanket the desktop.
         implicitWidth: shell.mockMode ? 1280 : 1920
         implicitHeight: shell.mockMode ? 800 : 1080
 
@@ -36,6 +35,15 @@ ShellRoot {
             asynchronous: true
             cache: true
             visible: false
+
+            // Bounded decode. Without a cap a large or malicious image is
+            // expanded to its full pixel count in the process that holds
+            // the greetd socket, before anyone has authenticated.
+            sourceSize.width: 3840
+            sourceSize.height: 2160
+
+            onStatusChanged: if (status === Image.Error)
+                console.warn("quickgreet: cannot load wallpaper:", source)
         }
 
         MultiEffect {
@@ -48,11 +56,27 @@ ShellRoot {
             visible: bg.status === Image.Ready
         }
 
-        // Keeps text legible over arbitrary wallpapers.
+        // Keeps text legible over arbitrary wallpapers, and is the whole
+        // background when there is no usable image.
         Rectangle {
             anchors.fill: parent
             color: Colours.m3background
             opacity: bg.status === Image.Ready ? Config.dim : 1
+        }
+
+        // Dismisses open dropdowns on a click anywhere else.
+        //
+        // The z values matter: declared later in the file, this overlay
+        // would otherwise sit above the card and swallow clicks meant for
+        // the user list, which then looked alive but could never be used.
+        MouseArea {
+            anchors.fill: parent
+            z: 1
+            visible: sessionPicker.expanded || userList.open
+            onClicked: {
+                sessionPicker.expanded = false;
+                userList.open = false;
+            }
         }
 
         // ───────────────────────── clock ─────────────────────────
@@ -72,22 +96,21 @@ ShellRoot {
                 Layout.alignment: Qt.AlignHCenter
                 text: Qt.formatDateTime(clock.now, Config.timeFormat)
                 color: Colours.m3onSurface
-                font.family: "Rubik"
+                font.family: Config.fontFamily
                 font.pixelSize: 92
                 font.weight: Font.Light
             }
 
-            // The locale is set explicitly: the system locale need not
-            // match the language the greeter is configured to display.
+            // The locale comes from the active language rather than the
+            // system: the greeter may be configured to a different one.
             Text {
                 Layout.alignment: Qt.AlignHCenter
                 text: {
-                    const loc = Qt.locale(Config.effectiveLocale === "ru" ? "ru_RU" : "en_GB");
-                    const d = clock.now.toLocaleDateString(loc, Config.dateFormat);
+                    const d = clock.now.toLocaleDateString(Qt.locale(Strings.qtLocale), Config.dateFormat);
                     return d.charAt(0).toUpperCase() + d.slice(1);
                 }
                 color: Colours.m3onSurfaceVariant
-                font.family: "Rubik"
+                font.family: Config.fontFamily
                 font.pixelSize: 17
             }
         }
@@ -110,6 +133,7 @@ ShellRoot {
 
             anchors.centerIn: parent
             anchors.verticalCenterOffset: parent.height * 0.06
+            z: 2
 
             implicitWidth: 380
             implicitHeight: cardCol.implicitHeight + 44
@@ -146,8 +170,8 @@ ShellRoot {
             }
 
             // Shake on a rejected password. horizontalCenterOffset is the
-            // property to animate: the card is positioned with anchors,
-            // so animating x while centreIn is active does nothing.
+            // property to animate: the card is positioned with anchors, so
+            // animating x while centerIn is active does nothing.
             SequentialAnimation {
                 id: shake
 
@@ -198,15 +222,13 @@ ShellRoot {
                             anchors.centerIn: parent
                             text: auth.displayName.charAt(0).toUpperCase()
                             color: Colours.m3primary
-                            font.family: "Rubik"
+                            font.family: Config.fontFamily
                             font.pixelSize: 34
                             font.weight: Font.Medium
                             visible: avatarImg.status !== Image.Ready
                         }
                     }
 
-                    // Most accounts have no avatar file; the initial on a
-                    // tinted circle is the fallback.
                     Image {
                         id: avatarImg
 
@@ -215,6 +237,10 @@ ShellRoot {
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
                         visible: false
+
+                        // Decode no larger than it is drawn.
+                        sourceSize.width: 152
+                        sourceSize.height: 152
                     }
 
                     MultiEffect {
@@ -226,15 +252,33 @@ ShellRoot {
                     }
                 }
 
-                // ─────────── user name ───────────
+                // ─────────── user name and chooser ───────────
 
                 Item {
+                    id: nameRow
+
                     Layout.alignment: Qt.AlignHCenter
-                    implicitWidth: nameRow.implicitWidth
-                    implicitHeight: 28
+                    implicitWidth: nameLayout.implicitWidth + 16
+                    implicitHeight: 30
+
+                    readonly property bool selectable: auth.users.length > 1
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: height / 2
+                        color: nameArea.containsMouse && nameRow.selectable ? Colours.m3surfaceContainerHigh : "transparent"
+                        border.width: nameRow.activeFocus ? 2 : 0
+                        border.color: Colours.m3primary
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: 150
+                            }
+                        }
+                    }
 
                     RowLayout {
-                        id: nameRow
+                        id: nameLayout
 
                         anchors.centerIn: parent
                         spacing: 4
@@ -242,19 +286,18 @@ ShellRoot {
                         Text {
                             text: auth.displayName
                             color: Colours.m3onSurface
-                            font.family: "Rubik"
+                            font.family: Config.fontFamily
                             font.pixelSize: 19
                             font.weight: Font.Medium
                         }
 
-                        // Only offer a chooser when there is a choice.
                         Text {
                             text: "expand_more"
-                            font.family: "Material Symbols Rounded"
+                            font.family: Config.iconFontFamily
                             font.pixelSize: 18
                             color: Colours.m3onSurfaceVariant
-                            visible: auth.users.length > 1
-                            rotation: userList.visible ? 180 : 0
+                            visible: nameRow.selectable
+                            rotation: userList.open ? 180 : 0
 
                             Behavior on rotation {
                                 NumberAnimation {
@@ -264,11 +307,26 @@ ShellRoot {
                         }
                     }
 
+                    activeFocusOnTab: nameRow.selectable
+
+                    Keys.onPressed: event => {
+                        if (event.key === Qt.Key_Space || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                            userList.open = !userList.open;
+                            event.accepted = true;
+                        }
+                    }
+
                     MouseArea {
+                        id: nameArea
+
                         anchors.fill: parent
-                        enabled: auth.users.length > 1
+                        enabled: nameRow.selectable
+                        hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: userList.visible = !userList.visible
+                        onClicked: {
+                            userList.open = !userList.open;
+                            nameRow.forceActiveFocus();
+                        }
                     }
                 }
 
@@ -277,12 +335,22 @@ ShellRoot {
                 Rectangle {
                     id: userList
 
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: visible ? usersCol.implicitHeight + 12 : 0
+                    property bool open: false
 
-                    visible: false
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: open ? usersCol.implicitHeight + 12 : 0
+
+                    visible: Layout.preferredHeight > 0
+                    clip: true
                     radius: 14
                     color: Colours.m3surfaceContainerHigh
+
+                    Behavior on Layout.preferredHeight {
+                        NumberAnimation {
+                            duration: 150
+                            easing.type: Easing.OutCubic
+                        }
+                    }
 
                     ColumnLayout {
                         id: usersCol
@@ -300,19 +368,33 @@ ShellRoot {
                                 required property int index
                                 required property var modelData
 
+                                readonly property bool current: index === auth.userIndex
+
                                 Layout.fillWidth: true
                                 implicitHeight: 34
                                 radius: 10
-                                color: userArea.containsMouse ? Colours.m3surfaceContainerHighest : "transparent"
+                                color: userArea.containsMouse || userItem.activeFocus ? Colours.m3surfaceContainerHighest : "transparent"
+
+                                activeFocusOnTab: userList.open
+
+                                Keys.onPressed: event => {
+                                    if (event.key === Qt.Key_Space || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                                        auth.chooseUser(userItem.index);
+                                        event.accepted = true;
+                                    }
+                                }
 
                                 Text {
                                     anchors.left: parent.left
                                     anchors.leftMargin: 12
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: 12
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: userItem.modelData.realname
-                                    color: userItem.index === auth.userIndex ? Colours.m3primary : Colours.m3onSurface
-                                    font.family: "Rubik"
+                                    color: userItem.current ? Colours.m3primary : Colours.m3onSurface
+                                    font.family: Config.fontFamily
                                     font.pixelSize: 13
+                                    elide: Text.ElideRight
                                 }
 
                                 MouseArea {
@@ -321,15 +403,26 @@ ShellRoot {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        auth.userIndex = userItem.index;
-                                        userList.visible = false;
-                                        pwd.forceActiveFocus();
-                                    }
+                                    onClicked: auth.chooseUser(userItem.index)
                                 }
                             }
                         }
                     }
+                }
+
+                // ─────────── prompt label ───────────
+
+                // PAM decides what it is asking for. Anything beyond the
+                // first password round is labelled with PAM's own wording.
+                Text {
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.WordWrap
+                    text: auth.promptText
+                    color: Colours.m3onSurfaceVariant
+                    font.family: Config.fontFamily
+                    font.pixelSize: 13
+                    visible: text.length > 0
                 }
 
                 // ─────────── password field ───────────
@@ -337,7 +430,7 @@ ShellRoot {
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: 48
-                    radius: 24
+                    radius: height / 2
                     color: Colours.m3surfaceContainerHigh
                     border.width: 2
                     border.color: pwd.activeFocus ? Colours.m3primary : "transparent"
@@ -354,12 +447,11 @@ ShellRoot {
                         anchors.rightMargin: 10
                         spacing: 4
 
-                        // The field keeps handling input, selection and
-                        // IME; while the password is hidden its own text
-                        // is drawn transparent and the dots below stand in
-                        // for it, so each character can animate as it
-                        // arrives. TextInput cannot animate its own
-                        // password bullets.
+                        // The field keeps handling input, selection and IME;
+                        // while masked its own text is drawn transparent and
+                        // the dots below stand in for it, so each character
+                        // can animate as it arrives. TextInput cannot animate
+                        // its own password bullets.
                         Item {
                             Layout.fillWidth: true
                             implicitHeight: 26
@@ -369,22 +461,26 @@ ShellRoot {
 
                                 anchors.fill: parent
                                 verticalAlignment: TextInput.AlignVCenter
-                                echoMode: auth.revealPassword ? TextInput.Normal : TextInput.Password
+                                echoMode: auth.masked ? TextInput.Password : TextInput.Normal
                                 passwordCharacter: "•"
-                                color: auth.revealPassword ? Colours.m3onSurface : "transparent"
-                                font.family: "Rubik"
+                                color: auth.masked ? "transparent" : Colours.m3onSurface
+                                font.family: Config.fontFamily
                                 font.pixelSize: 16
                                 focus: true
                                 enabled: !greetd.busy
-                                selectByMouse: auth.revealPassword
-                                cursorVisible: auth.revealPassword && activeFocus
+                                selectByMouse: !auth.masked
+                                cursorVisible: !auth.masked && activeFocus
                                 clip: true
 
-                                onAccepted: auth.submit()
+                                onAccepted: auth.submit(text)
 
-                                // Feeds the layout fallback used when the
-                                // greeter is not running under Hyprland.
-                                Keys.onPressed: event => kb.handleKey(event)
+                                Keys.onPressed: event => {
+                                    kb.handleKey(event);
+                                    if (event.key === Qt.Key_Escape) {
+                                        auth.abort();
+                                        event.accepted = true;
+                                    }
+                                }
                             }
 
                             Text {
@@ -392,7 +488,7 @@ ShellRoot {
                                 text: Strings.tr("password")
                                 color: Colours.m3onSurfaceVariant
                                 font: pwd.font
-                                visible: pwd.text.length === 0 && !pwd.activeFocus
+                                visible: pwd.text.length === 0 && !pwd.activeFocus && auth.promptText.length === 0
                             }
 
                             Row {
@@ -401,13 +497,12 @@ ShellRoot {
                                 anchors.left: parent.left
                                 anchors.verticalCenter: parent.verticalCenter
                                 spacing: 7
-                                visible: !auth.revealPassword
+                                visible: auth.masked
 
-                                // Height is pinned rather than derived from
-                                // the children: the caret is taller than a
-                                // dot, so letting the row size itself makes
-                                // it grow when the field takes focus, which
-                                // shifts every dot upwards.
+                                // Pinned rather than derived from children:
+                                // the caret is taller than a dot, so a
+                                // self-sizing row grows when the field takes
+                                // focus and shifts every dot upwards.
                                 height: 18
 
                                 Repeater {
@@ -420,21 +515,17 @@ ShellRoot {
 
                                         width: 9
                                         height: 9
-                                        radius: 4.5
+                                        radius: width / 2
                                         color: Colours.m3primary
 
-                                        // Each dot is a freshly created
-                                        // item, so animating on completion
-                                        // fires exactly once per keystroke.
                                         scale: 0
                                         opacity: 0
 
                                         Component.onCompleted: pop.start()
 
-                                        // Targets are named explicitly:
-                                        // `parent` does not resolve inside
-                                        // an animation, which is not a
-                                        // visual item and has no parent.
+                                        // Targets are named: `parent` does not
+                                        // resolve inside an animation, which
+                                        // is not a visual item.
                                         ParallelAnimation {
                                             id: pop
 
@@ -459,8 +550,6 @@ ShellRoot {
                                     }
                                 }
 
-                                // Caret trailing the dots: TextInput's own
-                                // cursor is hidden along with its text.
                                 Rectangle {
                                     id: caret
 
@@ -491,20 +580,22 @@ ShellRoot {
                         }
 
                         // Caps Lock warning, shown where typing happens.
+                        // Hidden entirely when the state is unknown rather
+                        // than showing a permanently negative indicator.
                         Text {
                             text: "keyboard_capslock_badge"
-                            font.family: "Material Symbols Rounded"
+                            font.family: Config.iconFontFamily
                             font.pixelSize: 20
                             color: Colours.m3error
-                            visible: kb.capsLock
+                            visible: kb.capsLockKnown && kb.capsLock
                         }
 
                         Text {
-                            text: auth.revealPassword ? "visibility_off" : "visibility"
-                            font.family: "Material Symbols Rounded"
+                            text: auth.reveal ? "visibility_off" : "visibility"
+                            font.family: Config.iconFontFamily
                             font.pixelSize: 19
                             color: revealArea.containsMouse ? Colours.m3onSurface : Colours.m3outline
-                            visible: pwd.text.length > 0
+                            visible: pwd.text.length > 0 && auth.promptSecret
 
                             Behavior on color {
                                 ColorAnimation {
@@ -520,7 +611,7 @@ ShellRoot {
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                    auth.revealPassword = !auth.revealPassword;
+                                    auth.reveal = !auth.reveal;
                                     pwd.forceActiveFocus();
                                 }
                             }
@@ -533,15 +624,20 @@ ShellRoot {
                             Text {
                                 anchors.centerIn: parent
                                 text: "arrow_forward"
-                                font.family: "Material Symbols Rounded"
+                                font.family: Config.iconFontFamily
                                 font.pixelSize: 22
                                 color: pwd.text.length > 0 ? Colours.m3primary : Colours.m3outline
                                 visible: !greetd.busy
+                                // Clipped so a missing icon font cannot
+                                // spill the ligature name across the field.
+                                width: 28
+                                horizontalAlignment: Text.AlignHCenter
+                                elide: Text.ElideRight
 
                                 MouseArea {
                                     anchors.fill: parent
                                     cursorShape: Qt.PointingHandCursor
-                                    onClicked: auth.submit()
+                                    onClicked: auth.submit(pwd.text)
                                 }
                             }
 
@@ -550,10 +646,13 @@ ShellRoot {
 
                                 anchors.centerIn: parent
                                 text: "progress_activity"
-                                font.family: "Material Symbols Rounded"
+                                font.family: Config.iconFontFamily
                                 font.pixelSize: 22
                                 color: Colours.m3primary
                                 visible: greetd.busy
+                                width: 28
+                                horizontalAlignment: Text.AlignHCenter
+                                elide: Text.ElideRight
 
                                 RotationAnimation on rotation {
                                     running: spinner.visible
@@ -573,11 +672,19 @@ ShellRoot {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.WordWrap
-                    font.family: "Rubik"
+                    font.family: Config.fontFamily
                     font.pixelSize: 13
 
-                    text: auth.message.length > 0 ? auth.message : kb.capsLock ? Strings.tr("capsLockOn") : ""
-                    color: auth.messageIsError || kb.capsLock ? Colours.m3error : Colours.m3onSurfaceVariant
+                    text: {
+                        if (auth.message.length > 0)
+                            return auth.message;
+                        if (kb.capsLockKnown && kb.capsLock)
+                            return Strings.tr("capsLockOn");
+                        if (!fonts.iconsPresent)
+                            return Strings.tr("iconFontMissing");
+                        return "";
+                    }
+                    color: auth.messageIsError || (kb.capsLockKnown && kb.capsLock) || !fonts.iconsPresent ? Colours.m3error : Colours.m3onSurfaceVariant
                     opacity: text.length > 0 ? 1 : 0
 
                     Behavior on opacity {
@@ -589,16 +696,6 @@ ShellRoot {
             }
         }
 
-        // Dismisses open dropdowns on a click anywhere else.
-        MouseArea {
-            anchors.fill: parent
-            visible: sessionPicker.expanded || userList.visible
-            onClicked: {
-                sessionPicker.expanded = false;
-                userList.visible = false;
-            }
-        }
-
         // ────────────────────── bottom bar ──────────────────────
 
         Item {
@@ -607,6 +704,7 @@ ShellRoot {
             anchors.bottom: parent.bottom
             anchors.margins: 24
             implicitHeight: 40
+            z: 2
 
             SessionPicker {
                 id: sessionPicker
@@ -618,8 +716,8 @@ ShellRoot {
                 currentIndex: auth.sessionIndex
                 onSelected: index => auth.sessionIndex = index
 
-                // QUICKGREET_OPEN=1 starts with the list expanded, which
-                // is how its layout gets captured during development.
+                // QUICKGREET_OPEN=1 starts with the list expanded, which is
+                // how its layout gets captured during development.
                 Component.onCompleted: if (Quickshell.env("QUICKGREET_OPEN") === "1")
                     expanded = true
             }
@@ -632,9 +730,9 @@ ShellRoot {
                 Rectangle {
                     implicitWidth: capsRow.implicitWidth + 20
                     implicitHeight: 34
-                    radius: 17
+                    radius: height / 2
                     color: Qt.alpha(Colours.m3error, 0.18)
-                    visible: kb.capsLock
+                    visible: kb.capsLockKnown && kb.capsLock
 
                     RowLayout {
                         id: capsRow
@@ -644,7 +742,7 @@ ShellRoot {
 
                         Text {
                             text: "keyboard_capslock"
-                            font.family: "Material Symbols Rounded"
+                            font.family: Config.iconFontFamily
                             font.pixelSize: 17
                             color: Colours.m3error
                         }
@@ -652,21 +750,34 @@ ShellRoot {
                         Text {
                             text: "CAPS"
                             color: Colours.m3error
-                            font.family: "Rubik"
+                            font.family: Config.fontFamily
                             font.pixelSize: 12
                             font.weight: Font.Medium
                         }
                     }
                 }
 
-                // Active layout; click to switch.
+                // Active layout; click or Space to switch. Shown dimmed and
+                // inert when the compositor does not report the layout — a
+                // guessed indicator on a login screen is worse than none.
                 Rectangle {
+                    id: layoutBadge
+
                     implicitWidth: layoutRow.implicitWidth + 20
                     implicitHeight: 34
-                    radius: 17
-                    opacity: 0.92
+                    radius: height / 2
+                    opacity: kb.layoutKnown ? 0.92 : 0.45
 
-                    color: layoutArea.containsMouse && kb.canSwitch ? Colours.m3surfaceContainerHigh : Colours.m3surfaceContainer
+                    color: (layoutArea.containsMouse || layoutBadge.activeFocus) && kb.canSwitch ? Colours.m3surfaceContainerHigh : Colours.m3surfaceContainer
+
+                    activeFocusOnTab: kb.canSwitch
+
+                    Keys.onPressed: event => {
+                        if (event.key === Qt.Key_Space || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                            kb.cycleLayout();
+                            event.accepted = true;
+                        }
+                    }
 
                     Behavior on color {
                         ColorAnimation {
@@ -682,7 +793,7 @@ ShellRoot {
 
                         Text {
                             text: "keyboard"
-                            font.family: "Material Symbols Rounded"
+                            font.family: Config.iconFontFamily
                             font.pixelSize: 17
                             color: Colours.m3onSurfaceVariant
                         }
@@ -690,7 +801,7 @@ ShellRoot {
                         Text {
                             text: kb.layoutShort
                             color: Colours.m3onSurface
-                            font.family: "Rubik"
+                            font.family: Config.fontFamily
                             font.pixelSize: 13
                             font.weight: Font.Medium
                         }
@@ -705,8 +816,8 @@ ShellRoot {
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
                             kb.cycleLayout();
-                            // Focus must go back to the field, otherwise
-                            // there is nowhere to type after a mouse click.
+                            // Focus goes back to the field, otherwise there
+                            // is nowhere to type after a mouse click.
                             pwd.forceActiveFocus();
                         }
                     }
@@ -731,10 +842,11 @@ ShellRoot {
             anchors.bottom: parent.bottom
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottomMargin: 6
+            z: 3
             visible: shell.mockMode
-            text: Strings.tr("mockNotice") + " " + (Quickshell.env("MOCK_PASSWORD") || "test")
+            text: Strings.tr("mockNotice", Quickshell.env("MOCK_PASSWORD") || "test")
             color: Colours.m3outline
-            font.family: "Rubik"
+            font.family: Config.fontFamily
             font.pixelSize: 11
         }
     }
@@ -743,6 +855,18 @@ ShellRoot {
 
     KeyboardState {
         id: kb
+    }
+
+    // Detects the icon font once. A missing one renders every icon as its
+    // ligature name — "arrow_forward", "power_settings_new" — which gives
+    // the user nothing to search for unless it is named explicitly.
+    QtObject {
+        id: fonts
+
+        readonly property bool iconsPresent: Qt.fontFamilies().includes(Config.iconFontFamily)
+
+        Component.onCompleted: if (!iconsPresent)
+            console.warn("quickgreet: icon font", Config.iconFontFamily, "is not installed; icons will render as text")
     }
 
     QtObject {
@@ -754,7 +878,13 @@ ShellRoot {
         property int sessionIndex: 0
         property string message: ""
         property bool messageIsError: false
-        property bool revealPassword: false
+        property bool reveal: false
+
+        // Set while PAM is asking for something beyond the first password.
+        property string promptText: ""
+        property bool promptSecret: true
+
+        readonly property bool masked: promptSecret && !reveal
 
         readonly property var currentUser: users.length > 0 ? users[userIndex] : null
         readonly property var currentSession: sessions.length > 0 ? sessions[sessionIndex] : null
@@ -763,18 +893,62 @@ ShellRoot {
         readonly property string displayName: currentUser ? currentUser.realname : "?"
         readonly property string avatar: currentUser && currentUser.avatar ? "file://" + currentUser.avatar : ""
 
-        function submit(): void {
+        function chooseUser(index: int): void {
+            userIndex = index;
+            userList.open = false;
+            clearField();
+            pwd.forceActiveFocus();
+        }
+
+        function clearField(): void {
+            pwd.text = "";
+            reveal = false;
+        }
+
+        function note(text: string, isError: bool): void {
+            message = text;
+            messageIsError = isError;
+        }
+
+        // Enter either starts a login or answers whatever PAM last asked.
+        function submit(text: string): void {
             if (greetd.busy)
                 return;
-            if (!currentSession) {
-                message = Strings.tr("noSessions");
-                messageIsError = true;
+
+            if (greetd.awaitingInput) {
+                clearField();
+                greetd.respond(text);
                 return;
             }
 
-            message = "";
-            messageIsError = false;
-            greetd.login(username, pwd.text, currentSession.exec);
+            if (!currentSession) {
+                note(Strings.tr("noSessions"), true);
+                return;
+            }
+            if (!username) {
+                note(Strings.tr("noUsers"), true);
+                return;
+            }
+
+            note("", false);
+            greetd.login(username, text, currentSession.exec);
+            clearField();
+        }
+
+        // Escape backs out of an in-progress conversation.
+        function abort(): void {
+            if (userList.open || sessionPicker.expanded) {
+                userList.open = false;
+                sessionPicker.expanded = false;
+                return;
+            }
+            if (greetd.awaitingInput || greetd.busy) {
+                greetd.cancel();
+                promptText = "";
+                promptSecret = true;
+                note("", false);
+            }
+            clearField();
         }
     }
 
@@ -794,72 +968,86 @@ ShellRoot {
         id: greetd
 
         mock: shell.mockMode
+        timeoutSeconds: Config.timeoutSeconds
+
+        // PAM wants something more: a second factor, a new password, an
+        // answer to a question. Its own wording is shown as the label.
+        onPrompt: (message, secret) => {
+            auth.promptText = message;
+            auth.promptSecret = secret;
+            auth.reveal = false;
+            pwd.text = "";
+            pwd.forceActiveFocus();
+        }
+
+        // PAM said something. Shown verbatim: these messages are written
+        // for people and are translated, so matching their text would
+        // break on the first non-English system.
+        onNotice: (message, isError) => auth.note(message, isError)
 
         onFailed: description => {
-            auth.message = description;
-            auth.messageIsError = true;
-            // Clear the reveal toggle so a failed password is never left
-            // sitting on screen in plain text.
-            auth.revealPassword = false;
-            pwd.text = "";
+            auth.note(description, true);
+            auth.promptText = "";
+            auth.promptSecret = true;
+            auth.clearField();
             pwd.forceActiveFocus();
             shake.restart();
         }
 
-        onInfo: msg => {
-            auth.message = msg;
-            auth.messageIsError = false;
-        }
-
         onSucceeded: {
-            auth.message = Strings.tr("signedIn");
-            auth.messageIsError = false;
+            auth.note(Strings.tr("signedIn"), false);
+            auth.promptText = "";
+            auth.clearField();
+            // greetd starts the session only once the greeter exits, and
+            // kills it five seconds later if it has not. Leaving on our own
+            // lets the compositor shut down cleanly instead.
+            quitDelay.start();
         }
     }
 
-    Process {
-        command: ["python3", Config.script("list-sessions.py")]
-        running: true
+    Timer {
+        id: quitDelay
 
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    const list = JSON.parse(text);
-                    auth.sessions = list;
-
-                    const want = Quickshell.env("QUICKGREET_SESSION") || Config.defaultSession;
-                    if (want) {
-                        const idx = list.findIndex(s => s.id === want);
-                        if (idx >= 0)
-                            auth.sessionIndex = idx;
-                    }
-                } catch (e) {
-                    console.warn("quickgreet: could not parse session list:", e);
-                }
-            }
-        }
+        interval: 150
+        repeat: false
+        onTriggered: Qt.quit()
     }
 
-    Process {
-        command: ["python3", Config.script("list-users.py")]
-        running: true
+    // Both enumerators wait for the configuration: they are launched from
+    // a configured path, and starting early runs them from the default one.
+    JsonSource {
+        id: sessionSource
 
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    const list = JSON.parse(text);
-                    auth.users = list;
-
-                    const want = Quickshell.env("QUICKGREET_USER") || Config.defaultUser;
-                    if (want) {
-                        const idx = list.findIndex(u => u.name === want);
-                        if (idx >= 0)
-                            auth.userIndex = idx;
-                    }
-                } catch (e) {
-                    console.warn("quickgreet: could not parse user list:", e);
-                }
+        script: "list-sessions.py"
+        onLoaded: data => {
+            auth.sessions = data;
+            const want = Quickshell.env("QUICKGREET_SESSION") || Config.defaultSession;
+            if (want) {
+                const idx = data.findIndex(s => s.id === want);
+                if (idx >= 0)
+                    auth.sessionIndex = idx;
             }
+            if (data.length === 0)
+                auth.note(Strings.tr("noSessions"), true);
         }
+        onFailed: auth.note(Strings.tr("noSessions"), true)
+    }
+
+    JsonSource {
+        id: userSource
+
+        script: "list-users.py"
+        onLoaded: data => {
+            auth.users = data;
+            const want = Quickshell.env("QUICKGREET_USER") || Config.defaultUser;
+            if (want) {
+                const idx = data.findIndex(u => u.name === want);
+                if (idx >= 0)
+                    auth.userIndex = idx;
+            }
+            if (data.length === 0)
+                auth.note(Strings.tr("noUsers"), true);
+        }
+        onFailed: auth.note(Strings.tr("noUsers"), true)
     }
 }

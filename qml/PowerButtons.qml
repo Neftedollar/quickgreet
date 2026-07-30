@@ -36,7 +36,7 @@ RowLayout {
         Text {
             anchors.centerIn: parent
             text: btn.icon
-            font.family: "Material Symbols Rounded"
+            font.family: Config.iconFontFamily
             font.pixelSize: 20
             color: area.containsMouse ? Colours.m3onSurface : Colours.m3onSurfaceVariant
 
@@ -81,12 +81,16 @@ RowLayout {
                 anchors.centerIn: parent
                 text: btn.tip
                 color: Colours.m3onSurface
-                font.family: "Rubik"
+                font.family: Config.fontFamily
                 font.pixelSize: 12
             }
         }
     }
 
+    // loginctl rather than systemctl: it is provided by both systemd and
+    // elogind, so this works on Artix, Void, Devuan, Alpine and OpenRC
+    // systems too, and it maps onto the same org.freedesktop.login1
+    // actions the shipped polkit rule names.
     Process {
         id: runner
 
@@ -94,7 +98,18 @@ RowLayout {
 
         command: pending
         running: false
+
+        // Silence here means polkit refused. Without this the button is
+        // indistinguishable from a broken one.
+        onExited: code => {
+            if (code !== 0) {
+                console.warn("quickgreet: power action failed with", code);
+                root.failed(code);
+            }
+        }
     }
+
+    signal failed(int code)
 
     function run(argv: var): void {
         runner.running = false;
@@ -105,18 +120,18 @@ RowLayout {
     PowerButton {
         icon: "bedtime"
         tip: Strings.tr("suspend")
-        action: () => root.run(["systemctl", "suspend"])
+        action: () => root.run(["loginctl", "suspend"])
     }
 
     PowerButton {
         icon: "restart_alt"
         tip: Strings.tr("reboot")
-        action: () => root.run(["systemctl", "reboot"])
+        action: () => root.run(["loginctl", "reboot"])
     }
 
     PowerButton {
         icon: "power_settings_new"
         tip: Strings.tr("shutdown")
-        action: () => root.run(["systemctl", "poweroff"])
+        action: () => root.run(["loginctl", "poweroff"])
     }
 }

@@ -49,14 +49,21 @@ Singleton {
         if (!c)
             return false;
 
-        if (data.mode)
+        if (typeof data.mode === "string")
             root.mode = data.mode;
 
+        // Applied one key at a time. A single bad value must not abort the
+        // loop: a half-applied palette can pair a light background with
+        // light foregrounds and render the login screen unreadable.
         for (const key of root.keys) {
             const val = c[key];
-            if (!val)
+            if (typeof val !== "string" || !val)
                 continue;
-            root["m3" + key] = val.startsWith("#") ? val : "#" + val;
+            try {
+                root["m3" + key] = val.startsWith("#") ? val : "#" + val;
+            } catch (e) {
+                console.warn("quickgreet: bad colour for", key + ":", e);
+            }
         }
 
         root.loaded = true;

@@ -21,6 +21,25 @@ Item {
     implicitWidth: button.implicitWidth
     implicitHeight: button.implicitHeight
 
+    // Reachable without a mouse: a greeter must work when the touchpad is
+    // dead or no pointer is attached at all.
+    activeFocusOnTab: sessions.length > 1
+
+    Keys.onPressed: event => {
+        if (event.key === Qt.Key_Space || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+            root.toggle();
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Escape && root.expanded) {
+            root.expanded = false;
+            event.accepted = true;
+        } else if (root.expanded && (event.key === Qt.Key_Down || event.key === Qt.Key_Up)) {
+            const step = event.key === Qt.Key_Down ? 1 : -1;
+            const next = (root.currentIndex + step + root.sessions.length) % root.sessions.length;
+            root.selected(next);
+            event.accepted = true;
+        }
+    }
+
     function toggle(): void {
         if (sessions.length > 0)
             expanded = !expanded;
@@ -40,8 +59,10 @@ Item {
 
         implicitWidth: buttonRow.implicitWidth + 28
         implicitHeight: 40
-        radius: 20
-        color: root.expanded || buttonArea.containsMouse ? Colours.m3surfaceContainerHigh : Colours.m3surfaceContainer
+        radius: height / 2
+        color: root.expanded || buttonArea.containsMouse || root.activeFocus ? Colours.m3surfaceContainerHigh : Colours.m3surfaceContainer
+        border.width: root.activeFocus ? 2 : 0
+        border.color: Colours.m3primary
         opacity: 0.92
 
         Behavior on color {
@@ -58,7 +79,7 @@ Item {
 
             Text {
                 text: "desktop_windows"
-                font.family: "Material Symbols Rounded"
+                font.family: Config.iconFontFamily
                 font.pixelSize: 18
                 color: Colours.m3onSurfaceVariant
             }
@@ -66,13 +87,13 @@ Item {
             Text {
                 text: root.currentName
                 color: Colours.m3onSurface
-                font.family: "Rubik"
+                font.family: Config.fontFamily
                 font.pixelSize: 14
             }
 
             Text {
                 text: "expand_more"
-                font.family: "Material Symbols Rounded"
+                font.family: Config.iconFontFamily
                 font.pixelSize: 16
                 color: Colours.m3onSurfaceVariant
                 rotation: root.expanded ? 180 : 0
@@ -92,7 +113,10 @@ Item {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: root.toggle()
+            onClicked: {
+                root.toggle();
+                root.forceActiveFocus();
+            }
         }
     }
 
@@ -182,7 +206,7 @@ Item {
 
                         Text {
                             text: item.isCurrent ? "radio_button_checked" : "radio_button_unchecked"
-                            font.family: "Material Symbols Rounded"
+                            font.family: Config.iconFontFamily
                             font.pixelSize: 16
                             color: item.isCurrent ? Colours.m3primary : Colours.m3outline
                         }
@@ -192,7 +216,7 @@ Item {
                         Text {
                             text: item.modelData.name
                             color: item.isCurrent ? Colours.m3primary : Colours.m3onSurface
-                            font.family: "Rubik"
+                            font.family: Config.fontFamily
                             font.pixelSize: 13
                         }
 
@@ -203,7 +227,7 @@ Item {
                         Text {
                             text: item.modelData.type === "x11" ? "X11" : "Wayland"
                             color: Colours.m3outline
-                            font.family: "Rubik"
+                            font.family: Config.fontFamily
                             font.pixelSize: 11
                         }
                     }
