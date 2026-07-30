@@ -1019,6 +1019,9 @@ ShellRoot {
         id: sessionSource
 
         script: "list-sessions.py"
+        // Session names carry Name[xx] variants; hand the script the
+        // language the greeter is actually displaying.
+        args: ["--locale", Strings.qtLocale]
         onLoaded: data => {
             auth.sessions = data;
             const want = Quickshell.env("QUICKGREET_SESSION") || Config.defaultSession;

@@ -14,6 +14,12 @@ set -u
 
 CONF="${QUICKGREET_HYPRLAND_CONF:-/etc/quickgreet/hyprland.conf}"
 
+# The compositor is overridable so the greeter is not welded to Hyprland.
+# Only Hyprland can report or switch the keyboard layout, so the badge
+# goes inert elsewhere, but everything else works under cage, sway or
+# labwc. Word splitting here is intended: the value is a command line.
+COMPOSITOR="${QUICKGREET_COMPOSITOR:-Hyprland -c $CONF}"
+
 # Themes to prefer when several are installed, most neutral first. Any
 # installed theme beats none, so this is only about which one looks least
 # out of place — the fallback below accepts whatever exists.
@@ -78,8 +84,11 @@ fi
 # the moment the session ends, so a startup failure leaves nothing to read.
 LOG="${QUICKGREET_LOG:-/var/log/quickgreet.log}"
 if : >>"$LOG" 2>/dev/null; then
-    echo "--- $(date -Is) greeter starting ---" >>"$LOG"
-    exec Hyprland -c "$CONF" >>"$LOG" 2>&1
+    echo "--- $(date +%FT%T%z) greeter starting ---" >>"$LOG"
+    exec $COMPOSITOR >>"$LOG" 2>&1
 fi
 
-exec Hyprland -c "$CONF"
+# Falling back silently is what made a startup failure unreadable in the
+# first place, so say why before giving up on the log.
+echo "quickgreet: cannot write $LOG; compositor output will be discarded" >&2
+exec $COMPOSITOR

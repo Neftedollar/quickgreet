@@ -8,6 +8,10 @@ picker, live keyboard layout and Caps Lock indicators, and power controls.
 Colours are read from a Material You style scheme file, so the login screen
 can match the desktop it leads into.
 
+Authentication is a full PAM conversation, not a single password exchange:
+second factors, expired-password changes and PAM's own messages all work.
+Everything is reachable from the keyboard. Fifteen languages.
+
 ## Status
 
 Working and in daily use, but young. The protocol layer is complete
@@ -82,7 +86,7 @@ impossible.
 
 | Key | Default | Meaning |
 |---|---|---|
-| `locale` | `"en"` | `en`, `ru`, or `auto` to follow the system |
+| `locale` | `"auto"` | a language code, or `auto` to follow the system |
 | `wallpaper` | `""` | Background image; empty means a solid colour |
 | `blur` | `0.85` | Background blur, 0–1 |
 | `dim` | `0.72` | Background dimming, 0–1 |
@@ -92,6 +96,17 @@ impossible.
 | `showPowerButtons` | `true` | Show suspend/reboot/shutdown |
 | `timeFormat` | `"HH:mm"` | Qt time format |
 | `dateFormat` | `"dddd, d MMMM"` | Qt date format |
+| `fontFamily` | `"Rubik"` | UI font |
+| `iconFontFamily` | `"Material Symbols Rounded"` | icon font |
+| `timeoutSeconds` | `60` | how long to wait for greetd before giving up |
+
+Languages: `en`, `ru`, `uk`, `de`, `fr`, `es`, `it`, `pt`, `pl`, `cs`, `nl`,
+`tr`, `sv`, `zh`, `ja`. Adding one is a single object in `qml/Strings.qml`;
+missing keys fall back to English, so partial translations are fine.
+
+`wallpaper` must be a local path. Remote URLs are refused: a greeter that
+fetches over the network announces every boot to whoever hosts the image,
+before anyone has authenticated.
 
 ### Colours
 
@@ -156,13 +171,32 @@ ones. Without any of them, the account's initial is drawn instead.
 ## Development
 
 ```sh
-./test.sh          # mock mode, password "test"
-./test.sh -k       # stop it
+./test.sh                        # mock mode, password "test"
+./test.sh -k                     # stop it
+MOCK_SCENARIO=2fa ./test.sh      # a different conversation
+python3 -m unittest discover tests
 ```
 
 Mock mode runs the full UI and the entire protocol state machine against a
 simulated greetd, in an ordinary window inside your current session. No
 authentication happens and nobody is logged in.
+
+`MOCK_SCENARIO` picks what the mock plays back. A plain success exercises
+almost nothing, and every deadlock found in review lived in a message kind
+the mock could not produce:
+
+| | |
+|---|---|
+| `normal` | password, then success |
+| `2fa` | password, then a visible code prompt (any 6 digits) |
+| `expired` | password, then two prompts for a new one |
+| `info` | an informational message before the password |
+| `lockout` | an error message, the kind that used to wedge the greeter |
+| `hang` | no reply at all, to exercise the timeout |
+
+The tests cover protocol framing, `.desktop` parsing and account
+filtering — everything that needs neither a compositor nor greetd. Standard
+library only; nothing to install.
 
 Drop a `config/config.dev.json` in the checkout to point at your own
 wallpaper and scheme; it is gitignored and takes precedence over the
@@ -183,13 +217,35 @@ qml/      shell.qml and components; this is the Quickshell config root
 scripts/  greetd bridge, session and user enumerators, greeter launcher
 config/   example config, greetd and Hyprland samples
 contrib/  PKGBUILD, polkit rules
+tests/    unittest suite for the scripts
 ```
+
+### Packaging
+
+`install.sh` honours `DESTDIR`, `PREFIX` and `SYSCONFDIR`, so a package
+can call it rather than reimplementing the layout:
+
+```sh
+DESTDIR="$pkgdir" ./install.sh
+```
+
+`QUICKGREET_COMPOSITOR` overrides the compositor the launcher starts, for
+anyone not using Hyprland.
 
 ## Notes
 
-**Power buttons** call `systemctl`. greetd's user usually has polkit
-permission for this; if the buttons do nothing, install
-`contrib/polkit/10-quickgreet-power.rules`.
+**X11 sessions** are not listed by default. greetd runs the session
+command on a bare VT with no X server, so an `xsessions` entry fails
+invisibly and bounces back to the greeter — on screen, indistinguishable
+from a wrong password. Pass `--include-x11` to `list-sessions.py` if your
+entries are wrapped in `startx` or similar.
+
+**Power buttons** call `loginctl`, which both systemd and elogind provide.
+The greeter's user usually has polkit permission already; if the buttons do
+nothing, install `contrib/polkit/10-quickgreet-power.rules`. That rule
+deliberately does not grant the `*-multiple-sessions` actions: those cover
+the case where other people are still logged in, and being asked to
+authenticate there is the point.
 
 **greetd framing** is a 4-byte native-endian length followed by JSON.
 Quickshell's `Socket` splits on delimiters and cannot read that, which is

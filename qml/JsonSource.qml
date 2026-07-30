@@ -16,6 +16,9 @@ Item {
 
     required property string script
 
+    // Extra arguments for the script, e.g. the locale to localise names by.
+    property var args: []
+
     signal loaded(var data)
     signal failed(string reason)
 
@@ -23,7 +26,7 @@ Item {
         id: proc
 
         running: Config.ready
-        command: ["python3", Config.script(root.script)]
+        command: ["python3", Config.script(root.script)].concat(root.args)
 
         stdout: StdioCollector {
             onStreamFinished: {

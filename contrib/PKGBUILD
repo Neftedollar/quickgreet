@@ -28,21 +28,10 @@ sha256sums=('SKIP')
 package() {
     cd "$srcdir/$pkgname-$pkgver"
 
-    install -Dm644 qml/*.qml -t "$pkgdir/usr/share/quickgreet"
-    install -Dm755 scripts/*.py scripts/*.sh -t "$pkgdir/usr/lib/quickgreet"
+    # Delegated rather than reimplemented: when the two were separate they
+    # drifted, and the package laid files out differently from what the
+    # installer and the README described.
+    DESTDIR="$pkgdir" ./install.sh
 
-    install -Dm644 config/config.example.json "$pkgdir/etc/quickgreet/config.json"
-    install -Dm644 config/hyprland.conf -t "$pkgdir/etc/quickgreet"
-    install -Dm644 config/greetd-test.toml -t "$pkgdir/etc/quickgreet"
-
-    # Sample greetd configuration, not activated: overwriting a working
-    # /etc/greetd/config.toml on install would lock people out.
-    install -Dm644 config/greetd-config.toml \
-        "$pkgdir/usr/share/doc/quickgreet/greetd-config.toml"
-
-    install -Dm644 contrib/polkit/10-quickgreet-power.rules \
-        "$pkgdir/usr/share/doc/quickgreet/10-quickgreet-power.rules"
-
-    install -Dm644 README.md -t "$pkgdir/usr/share/doc/quickgreet"
     install -Dm644 LICENSE -t "$pkgdir/usr/share/licenses/quickgreet"
 }
