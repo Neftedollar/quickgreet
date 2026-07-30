@@ -15,6 +15,11 @@ Singleton {
 
     readonly property string configPath: Quickshell.env("QUICKGREET_CONFIG") || "/etc/quickgreet/config.json"
 
+    // Set once the file has been read or definitively found missing.
+    // Consumers wait on this so they do not act on default paths that are
+    // about to be replaced.
+    property bool ready: false
+
     // UI language: "en", "ru", or "auto" to follow the system locale.
     property string locale: "en"
 
@@ -71,7 +76,15 @@ Singleton {
 
     FileView {
         path: root.configPath
-        onLoaded: root.apply(text())
-        onLoadFailed: console.log("quickgreet: no config file, using defaults")
+
+        onLoaded: {
+            root.apply(text());
+            root.ready = true;
+        }
+
+        onLoadFailed: {
+            console.log("quickgreet: no config file, using defaults");
+            root.ready = true;
+        }
     }
 }

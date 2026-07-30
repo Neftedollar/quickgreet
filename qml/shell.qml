@@ -403,11 +403,20 @@ ShellRoot {
                                 spacing: 7
                                 visible: !auth.revealPassword
 
+                                // Height is pinned rather than derived from
+                                // the children: the caret is taller than a
+                                // dot, so letting the row size itself makes
+                                // it grow when the field takes focus, which
+                                // shifts every dot upwards.
+                                height: 18
+
                                 Repeater {
                                     model: pwd.text.length
 
                                     delegate: Rectangle {
                                         id: dot
+
+                                        anchors.verticalCenter: parent.verticalCenter
 
                                         width: 9
                                         height: 9

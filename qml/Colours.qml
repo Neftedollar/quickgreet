@@ -63,9 +63,16 @@ Singleton {
         return true;
     }
 
+    // Waits for the config to settle before reading. Config loads its own
+    // file asynchronously, so binding straight to Config.schemePath makes
+    // this fire once against the default path and log a spurious failure
+    // before the real path arrives.
     FileView {
-        path: Config.schemePath
+        path: Config.ready ? Config.schemePath : ""
         onLoaded: root.apply(text())
-        onLoadFailed: console.log("quickgreet: no scheme file, using default palette")
+        onLoadFailed: {
+            if (Config.ready)
+                console.log("quickgreet: no scheme file, using default palette");
+        }
     }
 }
