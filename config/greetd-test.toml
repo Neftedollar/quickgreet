@@ -1,0 +1,13 @@
+# Test configuration: binds vt 3 so it can run alongside whichever display
+# manager currently owns vt 1. Nothing system-wide is switched.
+#
+#   sudo greetd --config /etc/quickgreet/greetd-test.toml
+#
+# Then reach it with Ctrl+Alt+F3. Authentication is real.
+
+[terminal]
+vt = 3
+
+[default_session]
+command = "Hyprland -c /etc/quickgreet/hyprland.conf"
+user = "greeter"

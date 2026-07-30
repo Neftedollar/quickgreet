@@ -1,0 +1,12 @@
+{
+  "locale": "auto",
+  "wallpaper": "/etc/quickgreet/wallpaper.jpg",
+  "blur": 0.85,
+  "dim": 0.72,
+  "schemePath": "/etc/quickgreet/scheme.json",
+  "defaultSession": "",
+  "defaultUser": "",
+  "showPowerButtons": true,
+  "timeFormat": "HH:mm",
+  "dateFormat": "dddd, d MMMM"
+}

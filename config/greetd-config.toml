@@ -1,0 +1,13 @@
+# /etc/greetd/config.toml
+#
+# Production configuration: greetd owns vt 1 and runs quickgreet inside a
+# minimal Hyprland. Hyprland is required rather than a kiosk compositor
+# because the keyboard layout indicator reads and switches the layout
+# through hyprctl, which no other compositor exposes.
+
+[terminal]
+vt = 1
+
+[default_session]
+command = "Hyprland -c /etc/quickgreet/hyprland.conf"
+user = "greeter"

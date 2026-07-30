@@ -1,0 +1,9 @@
+# Local development config: points at a personal wallpaper and scheme
+config/config.dev.json
+
+# Generated during testing
+*.log
+*.pid
+
+__pycache__/
+*.pyc
