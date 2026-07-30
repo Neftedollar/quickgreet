@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 """Bridge between QML and greetd.
 
-greetd speaks a binary framing over its unix socket: a 4-byte native
-endian length followed by a JSON payload. Quickshell's QML Socket splits
-an incoming stream on a delimiter and cannot read length-prefixed frames,
-so this process translates between the two.
+greetd frames its messages as a 4-byte native-endian length followed by a
+JSON payload. Quickshell's QML Socket splits an incoming stream on a
+delimiter and cannot read length-prefixed frames, so this process
+translates: line-delimited JSON on stdin and stdout, greetd's framing on
+the socket.
 
-Line-delimited JSON on stdin and stdout; greetd's native framing on the
-socket.
+Nothing that has touched a password is ever written to stderr. The
+greeter's output is persisted to a log file that other accounts can read,
+and exception text from this layer carries byte offsets into the line
+being sent — which discloses the exact length of the password.
 
---mock runs without greetd at all, simulating the protocol so the UI can
-be developed inside a normal session. In mock mode the accepted password
-is $MOCK_PASSWORD, defaulting to "test".
+--mock runs without greetd, simulating the protocol so the UI can be
+developed inside a normal session. MOCK_SCENARIO selects which
+conversation to play back; see SCENARIOS.
 """
 
 import json
@@ -23,15 +26,30 @@ import threading
 
 HEADER = struct.Struct("=I")  # native endian, as greetd expects
 
+# A frame larger than this is a desynchronised stream, not a message.
+MAX_FRAME = 1 << 20
+
+_out_lock = threading.Lock()
+
 
 def out(obj):
-    """Emit a message to the QML side."""
-    sys.stdout.write(json.dumps(obj) + "\n")
-    sys.stdout.flush()
+    """Emit a message to the QML side. Safe to call from any thread."""
+    line = json.dumps(obj) + "\n"
+    with _out_lock:
+        try:
+            sys.stdout.write(line)
+            sys.stdout.flush()
+        except (BrokenPipeError, ValueError):
+            os._exit(0)
 
 
 def log(msg):
+    """Diagnostics only. Never called with anything derived from a payload."""
     print(f"[bridge] {msg}", file=sys.stderr, flush=True)
+
+
+def fail(description):
+    out({"type": "error", "error_type": "error", "description": description})
 
 
 # ───────────────────────────── real greetd ─────────────────────────────
@@ -62,6 +80,8 @@ class GreetdConn:
         if head is None:
             return None
         (length,) = HEADER.unpack(head)
+        if length > MAX_FRAME:
+            raise ValueError("frame too large")
         body = self._recv_exactly(length)
         if body is None:
             return None
@@ -71,22 +91,26 @@ class GreetdConn:
 def run_real(path):
     try:
         conn = GreetdConn(path)
-    except OSError as e:
-        out({"type": "error", "error_type": "error",
-             "description": f"cannot connect to greetd: {e}"})
+    except OSError:
+        # No detail: the socket path and errno end up on a login screen.
+        fail("cannot connect to the login service")
         return 1
 
     def reader():
         while True:
             try:
                 msg = conn.recv()
-            except Exception as e:
-                out({"type": "error", "error_type": "error",
-                     "description": f"read failed: {e}"})
-                return
+            except Exception:
+                fail("lost connection to the login service")
+                os._exit(1)
             if msg is None:
+                # greetd closed the socket. Saying so and exiting is what
+                # lets the UI recover; a silent return leaves this process
+                # alive, so the greeter sees a healthy bridge that will
+                # never answer again.
                 log("greetd closed the connection")
-                return
+                fail("lost connection to the login service")
+                os._exit(1)
             out(msg)
 
     threading.Thread(target=reader, daemon=True).start()
@@ -96,19 +120,61 @@ def run_real(path):
         if not line:
             continue
         try:
-            conn.send(json.loads(line))
-        except Exception as e:
-            log(f"send failed: {e}")
+            request = json.loads(line)
+        except ValueError:
+            # The exception text quotes an offset into the line, which is
+            # the password's length. Report the fact, not the detail.
+            log("malformed request from the UI")
+            fail("internal error")
+            return 1
+
+        try:
+            conn.send(request)
+        except OSError:
+            fail("lost connection to the login service")
+            return 1
+
     return 0
 
 
 # ────────────────────────────── mock mode ──────────────────────────────
 
+# Conversations the mock can play back. The real deadlocks all lived in
+# message kinds the old mock never produced, so it reported success on a
+# greeter that could not actually be used.
+SCENARIOS = {
+    # password -> success
+    "normal": None,
+    # password, then a visible one-time code (any 6 digits accepted)
+    "2fa": None,
+    # password, then two secret prompts for a new one
+    "expired": None,
+    # an info message before the password prompt
+    "info": None,
+    # an error message, the kind that used to wedge the greeter
+    "lockout": None,
+    # never answers, to exercise the timeout
+    "hang": None,
+}
+
 
 def run_mock():
-    """Simulates greetd so the UI can be exercised without logging in."""
     password = os.environ.get("MOCK_PASSWORD", "test")
-    log(f"mock mode, password: {password!r}")
+    scenario = os.environ.get("MOCK_SCENARIO", "normal")
+    if scenario not in SCENARIOS:
+        log(f"unknown MOCK_SCENARIO {scenario!r}, using 'normal'")
+        scenario = "normal"
+
+    log(f"mock mode, scenario {scenario}")
+
+    state = {"step": 0}
+
+    def ask(kind, text):
+        out({"type": "auth_message", "auth_message_type": kind, "auth_message": text})
+
+    def deny():
+        out({"type": "error", "error_type": "auth_error",
+             "description": "Authentication failure"})
 
     for line in sys.stdin:
         line = line.strip()
@@ -116,29 +182,70 @@ def run_mock():
             continue
         try:
             req = json.loads(line)
-        except Exception:
+        except ValueError:
             continue
 
         kind = req.get("type")
 
         if kind == "create_session":
-            out({"type": "auth_message",
-                 "auth_message_type": "secret",
-                 "auth_message": "Password:"})
+            state["step"] = 0
+            if scenario == "hang":
+                continue
+            if scenario == "info":
+                ask("info", "Last login: never")
+                continue
+            if scenario == "lockout":
+                ask("error", "The account is locked due to 3 failed logins.")
+                continue
+            ask("secret", "Password:")
 
         elif kind == "post_auth_message_response":
-            if req.get("response") == password:
+            answer = req.get("response")
+            step = state["step"]
+            state["step"] = step + 1
+
+            if scenario == "info" and step == 0:
+                ask("secret", "Password:")
+                continue
+            if scenario == "lockout" and step == 0:
+                deny()
+                continue
+
+            if step == 0:
+                if answer != password:
+                    deny()
+                    continue
+                if scenario == "2fa":
+                    ask("visible", "Verification code:")
+                    continue
+                if scenario == "expired":
+                    ask("secret", "New password:")
+                    continue
                 out({"type": "success"})
-            else:
-                out({"type": "error",
-                     "error_type": "auth_error",
-                     "description": "Authentication failure"})
+                continue
+
+            if scenario == "2fa" and step == 1:
+                if (answer or "").isdigit() and len(answer) == 6:
+                    out({"type": "success"})
+                else:
+                    deny()
+                continue
+
+            if scenario == "expired":
+                if step == 1:
+                    ask("secret", "Retype new password:")
+                else:
+                    out({"type": "success"})
+                continue
+
+            out({"type": "success"})
 
         elif kind == "start_session":
-            log(f"mock: would start session {req.get('cmd')}")
+            log("mock: would start a session")
             out({"type": "success"})
 
         elif kind == "cancel_session":
+            state["step"] = 0
             out({"type": "success"})
 
     return 0
@@ -146,12 +253,17 @@ def run_mock():
 
 def main():
     if "--mock" in sys.argv:
+        # Refuse to pretend when a real greetd is present: a mock that can
+        # be activated in production is a login screen that authenticates
+        # nobody while claiming success.
+        if os.environ.get("GREETD_SOCK"):
+            log("refusing --mock: GREETD_SOCK is set")
+            return 1
         return run_mock()
 
     path = os.environ.get("GREETD_SOCK")
     if not path:
-        out({"type": "error", "error_type": "error",
-             "description": "GREETD_SOCK is unset - not running under greetd"})
+        fail("not running under greetd")
         return 1
     return run_real(path)
 

@@ -7,6 +7,17 @@
 #   ./test.sh -k           stop a running instance
 #   MOCK_PASSWORD=x ./test.sh
 #
+# MOCK_SCENARIO picks the conversation the mock plays back. The default
+# is a single password prompt; the others exercise paths the UI used to
+# handle wrongly and that a plain success can never reach:
+#
+#   normal   password, then success
+#   2fa      password, then a visible code prompt (any 6 digits)
+#   expired  password, then two prompts for a new one
+#   info     an informational message before the password
+#   lockout  an error message, the kind that used to wedge the greeter
+#   hang     no reply at all, to exercise the timeout
+#
 # Shutdown goes through a PID file rather than a command-line pattern on
 # purpose. Any pattern broad enough to match the greeter ("qs -c ...",
 # "quickshell.*greet") also matches this script's own path and the
@@ -47,6 +58,7 @@ stop
 
 export QUICKGREET_MOCK=1
 export MOCK_PASSWORD="${MOCK_PASSWORD:-test}"
+export MOCK_SCENARIO="${MOCK_SCENARIO:-normal}"
 export QUICKGREET_SCRIPTS="$here/scripts"
 
 # Prefer an untracked local config if one exists, so a developer can
@@ -60,7 +72,7 @@ if [ -z "${QUICKGREET_CONFIG:-}" ]; then
     fi
 fi
 
-echo "mock mode · password '${MOCK_PASSWORD}' · config ${QUICKGREET_CONFIG}"
+echo "mock mode · scenario ${MOCK_SCENARIO} · password '${MOCK_PASSWORD}'"
 
 : > "$LOG"
 setsid qs -p "$here/qml/shell.qml" </dev/null >"$LOG" 2>&1 &
