@@ -354,25 +354,38 @@ ShellRoot {
                         anchors.rightMargin: 10
                         spacing: 4
 
-                        TextInput {
-                            id: pwd
-
+                        // The field keeps handling input, selection and
+                        // IME; while the password is hidden its own text
+                        // is drawn transparent and the dots below stand in
+                        // for it, so each character can animate as it
+                        // arrives. TextInput cannot animate its own
+                        // password bullets.
+                        Item {
                             Layout.fillWidth: true
-                            echoMode: auth.revealPassword ? TextInput.Normal : TextInput.Password
-                            passwordCharacter: "•"
-                            color: Colours.m3onSurface
-                            font.family: "Rubik"
-                            font.pixelSize: 16
-                            focus: true
-                            enabled: !greetd.busy
-                            selectByMouse: true
-                            clip: true
+                            implicitHeight: 26
 
-                            onAccepted: auth.submit()
+                            TextInput {
+                                id: pwd
 
-                            // Feeds the layout fallback used when the
-                            // greeter is not running under Hyprland.
-                            Keys.onPressed: event => kb.handleKey(event)
+                                anchors.fill: parent
+                                verticalAlignment: TextInput.AlignVCenter
+                                echoMode: auth.revealPassword ? TextInput.Normal : TextInput.Password
+                                passwordCharacter: "•"
+                                color: auth.revealPassword ? Colours.m3onSurface : "transparent"
+                                font.family: "Rubik"
+                                font.pixelSize: 16
+                                focus: true
+                                enabled: !greetd.busy
+                                selectByMouse: auth.revealPassword
+                                cursorVisible: auth.revealPassword && activeFocus
+                                clip: true
+
+                                onAccepted: auth.submit()
+
+                                // Feeds the layout fallback used when the
+                                // greeter is not running under Hyprland.
+                                Keys.onPressed: event => kb.handleKey(event)
+                            }
 
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
@@ -380,6 +393,91 @@ ShellRoot {
                                 color: Colours.m3onSurfaceVariant
                                 font: pwd.font
                                 visible: pwd.text.length === 0 && !pwd.activeFocus
+                            }
+
+                            Row {
+                                id: dots
+
+                                anchors.left: parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 7
+                                visible: !auth.revealPassword
+
+                                Repeater {
+                                    model: pwd.text.length
+
+                                    delegate: Rectangle {
+                                        id: dot
+
+                                        width: 9
+                                        height: 9
+                                        radius: 4.5
+                                        color: Colours.m3primary
+
+                                        // Each dot is a freshly created
+                                        // item, so animating on completion
+                                        // fires exactly once per keystroke.
+                                        scale: 0
+                                        opacity: 0
+
+                                        Component.onCompleted: pop.start()
+
+                                        // Targets are named explicitly:
+                                        // `parent` does not resolve inside
+                                        // an animation, which is not a
+                                        // visual item and has no parent.
+                                        ParallelAnimation {
+                                            id: pop
+
+                                            NumberAnimation {
+                                                target: dot
+                                                property: "scale"
+                                                from: 0
+                                                to: 1
+                                                duration: 220
+                                                easing.type: Easing.OutBack
+                                                easing.overshoot: 3.5
+                                            }
+
+                                            NumberAnimation {
+                                                target: dot
+                                                property: "opacity"
+                                                from: 0
+                                                to: 1
+                                                duration: 120
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Caret trailing the dots: TextInput's own
+                                // cursor is hidden along with its text.
+                                Rectangle {
+                                    id: caret
+
+                                    width: 2
+                                    height: 17
+                                    radius: 1
+                                    color: Colours.m3primary
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    visible: pwd.activeFocus && !greetd.busy
+
+                                    SequentialAnimation on opacity {
+                                        running: caret.visible
+                                        loops: Animation.Infinite
+
+                                        NumberAnimation {
+                                            to: 0
+                                            duration: 480
+                                            easing.type: Easing.InOutQuad
+                                        }
+                                        NumberAnimation {
+                                            to: 1
+                                            duration: 480
+                                            easing.type: Easing.InOutQuad
+                                        }
+                                    }
+                                }
                             }
                         }
 
