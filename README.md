@@ -160,13 +160,14 @@ Looked up in order, first readable wins:
 ```
 /var/lib/AccountsService/icons/$USER
 /var/lib/kdm/faces/$USER.face.icon
-~/.face
-~/.face.icon
 ```
 
-The greeter runs as an unprivileged user, so a file inside a home
-directory may not be readable — the `/var/lib` paths are the reliable
-ones. Without any of them, the account's initial is drawn instead.
+Home directories are deliberately not searched. The greeter decodes
+whatever it finds, before anyone has authenticated, in the process that
+holds the greetd socket — so a file under a user's own control there is an
+image decoder any unprivileged account can reach pre-authentication, with
+a decompression bomb or a codec bug. Without a system-wide avatar, the
+account's initial is drawn instead.
 
 ## Development
 
@@ -206,9 +207,15 @@ example.
 
 The keyboard layout belongs to the compositor and no Wayland client can
 read or change it on its own. Under Hyprland the greeter subscribes to the
-event socket for live layout updates and switches via `hyprctl`. Under a
-plain kiosk compositor such as `cage` everything else works, but the layout
-badge falls back to counting Alt+Shift itself and clicking it does nothing.
+event socket for live layout updates and switches via `hyprctl`.
+
+Everything else works under any compositor — `QUICKGREET_COMPOSITOR`
+selects one — but the layout badge then reads `--` and does not respond to
+clicks, because it has nothing to report. It deliberately does not guess:
+an indicator that confidently shows the wrong layout on a login screen is
+worse than no indicator at all. Set `QUICKGREET_LAYOUTS` to a comma-
+separated list to opt into tracking Alt+Shift presses instead, accepting
+that it is inference.
 
 ### Layout
 
