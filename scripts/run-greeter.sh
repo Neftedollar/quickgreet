@@ -73,4 +73,13 @@ else
     echo "quickgreet: no cursor theme installed, using compositor default" >&2
 fi
 
+# Keep the compositor's output somewhere that outlives the session. Its
+# own log lives under the greeter's XDG_RUNTIME_DIR, which logind removes
+# the moment the session ends, so a startup failure leaves nothing to read.
+LOG="${QUICKGREET_LOG:-/var/log/quickgreet.log}"
+if : >>"$LOG" 2>/dev/null; then
+    echo "--- $(date -Is) greeter starting ---" >>"$LOG"
+    exec Hyprland -c "$CONF" >>"$LOG" 2>&1
+fi
+
 exec Hyprland -c "$CONF"
