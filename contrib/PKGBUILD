@@ -29,7 +29,7 @@ package() {
     cd "$srcdir/$pkgname-$pkgver"
 
     install -Dm644 qml/*.qml -t "$pkgdir/usr/share/quickgreet"
-    install -Dm755 scripts/*.py -t "$pkgdir/usr/lib/quickgreet"
+    install -Dm755 scripts/*.py scripts/*.sh -t "$pkgdir/usr/lib/quickgreet"
 
     install -Dm644 config/config.example.json "$pkgdir/etc/quickgreet/config.json"
     install -Dm644 config/hyprland.conf -t "$pkgdir/etc/quickgreet"

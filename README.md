@@ -51,7 +51,7 @@ Point greetd at the greeter:
 vt = 1
 
 [default_session]
-command = "Hyprland -c /etc/quickgreet/hyprland.conf"
+command = "/usr/lib/quickgreet/run-greeter.sh"
 user = "greeter"
 ```
 
@@ -68,10 +68,10 @@ still in charge:
 
 ```sh
 sudo cp /etc/quickgreet/greetd-test.toml /tmp/
-sudo greetd --config /tmp/greetd-test.toml   # binds vt 3
+sudo greetd --config /tmp/greetd-test.toml   # binds vt 7
 ```
 
-Switch to it with `Ctrl+Alt+F3` and log in for real. If that works, make it
+Switch to it with `Ctrl+Alt+F7` and log in for real. If that works, make it
 permanent. Make sure your console keymap can type your password —
 `KEYMAP=` in `/etc/vconsole.conf` — or recovery from a text console will be
 impossible.
@@ -180,7 +180,7 @@ badge falls back to counting Alt+Shift itself and clicking it does nothing.
 
 ```
 qml/      shell.qml and components; this is the Quickshell config root
-scripts/  greetd bridge, session and user enumerators
+scripts/  greetd bridge, session and user enumerators, greeter launcher
 config/   example config, greetd and Hyprland samples
 contrib/  PKGBUILD, polkit rules
 ```
@@ -195,6 +195,23 @@ permission for this; if the buttons do nothing, install
 Quickshell's `Socket` splits on delimiters and cannot read that, which is
 why `scripts/greetd-bridge.py` exists: line-delimited JSON on one side,
 greetd's framing on the other.
+
+**Two cursors**, one lagging behind the other, mean a cursor theme is
+named but not installed — the compositor falls back to a built-in pointer
+while clients keep drawing their own. `run-greeter.sh` picks a theme that
+actually exists on the machine, which is why greetd runs it rather than
+Hyprland directly. If you see this inside your *desktop* session, check
+whatever sets `XCURSOR_THEME` there against `ls /usr/share/icons/*/cursors`.
+
+**Testing while already logged in** has limits worth knowing before you
+blame the greeter. The test VT must be genuinely free — `loginctl
+list-sessions` shows which are taken — or logind refuses the login with
+`VirtualTerminalAlreadyTaken` and greetd simply restarts the greeter,
+which looks exactly like a rejected password. Starting a *second*
+concurrent session for a user who is already logged in also fails with
+session managers that use systemd user units, `uwsm` among them; pick the
+plain compositor session from the dropdown for that test. Neither applies
+at a real boot.
 
 ## Licence
 

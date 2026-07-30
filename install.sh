@@ -38,7 +38,7 @@ echo "installing quickgreet"
 install -d "$QML_DIR" "$SCRIPT_DIR" "$CONF_DIR"
 
 install -m 0644 "$here"/qml/*.qml "$QML_DIR/"
-install -m 0755 "$here"/scripts/*.py "$SCRIPT_DIR/"
+install -m 0755 "$here"/scripts/*.py "$here"/scripts/*.sh "$SCRIPT_DIR/"
 
 # Configuration is never overwritten: an upgrade must not silently discard
 # whatever the administrator set up.
