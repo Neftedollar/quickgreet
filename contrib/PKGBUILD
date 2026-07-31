@@ -13,7 +13,7 @@ depends=(
     'hyprland'
     'ttf-material-symbols-variable'
     'ttf-rubik-vf'
-    'quickmotion'
+    'quickmotion' 'quickmaterial'
 )
 optdepends=(
     'python-materialyoucolor: generate a colour scheme from the wallpaper'

@@ -13,21 +13,27 @@ import QuickMaterial
 // variable, so a library cannot do this part — but Quickshell can, in one
 // property.
 //
-// `watchChanges` is that property. Without it the scheme is read once at
-// startup, which is fine for something that starts fresh every time and
-// wrong for this: the agent is registered for the whole session and will
-// outlive several changes of theme.
+// Read once, deliberately. This process lives for seconds and is restarted
+// every boot, so there is no change of theme for it to outlive — and it is
+// the process holding the greetd socket, so turning a start-up read into a
+// live re-parsed input needs a reason rather than an inherited habit. The
+// comment justifying `watchChanges` here was copied from quickask, where it
+// is true.
 Singleton {
     id: root
 
     // Applied before any scheme file, so a machine without one still gets a
     // complete palette rather than the library's own defaults.
-    Component.onCompleted: {
-        Themes.use(Config.theme || "slate");
-        _applyFonts();
-    }
+    //
+    // Applied *again* once the configuration lands. Config reads its JSON
+    // through a FileView that neither blocks nor preloads, so at completion
+    // `Config.theme` is still the compiled-in default and nothing the user
+    // wrote has arrived — an earlier version applied the theme here and only
+    // the fonts on ready, which made the `theme` key silently do nothing.
+    Component.onCompleted: _apply()
 
-    function _applyFonts(): void {
+    function _apply(): void {
+        Themes.use(Config.theme || "slate");
         if (Config.fontFamily)
             Type.family = Config.fontFamily;
         if (Config.iconFontFamily)
@@ -38,7 +44,7 @@ Singleton {
         target: Config
         function onReadyChanged(): void {
             if (Config.ready)
-                root._applyFonts();
+                root._apply();
         }
     }
 
@@ -48,7 +54,6 @@ Singleton {
     // real path arrives.
     FileView {
         path: Config.ready ? Config.schemePath : ""
-        watchChanges: true
 
         onLoaded: {
             try {

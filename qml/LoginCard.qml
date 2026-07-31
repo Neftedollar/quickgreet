@@ -51,7 +51,7 @@ Rectangle {
 
     implicitWidth: Metrics.dialogWidth
     implicitHeight: column.implicitHeight + 44
-    radius: Shape.extraLarge
+    radius: Corner.extraLarge
     color: Colours.surfaceContainer
     border.width: 1
     border.color: Qt.alpha(Colours.outline, 0.25)

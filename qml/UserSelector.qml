@@ -112,7 +112,7 @@ ColumnLayout {
 
         visible: Layout.preferredHeight > 0
         clip: true
-        radius: Shape.large
+        radius: Corner.large
         color: Colours.surfaceContainerHigh
 
         Behavior on Layout.preferredHeight {
@@ -141,7 +141,7 @@ ColumnLayout {
 
                     Layout.fillWidth: true
                     implicitHeight: Metrics.listItemDense
-                    radius: Shape.small
+                    radius: Corner.small
                     color: area.containsMouse || item.activeFocus ? Colours.surfaceContainerHighest : "transparent"
 
                     activeFocusOnTab: root.open
