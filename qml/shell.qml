@@ -14,6 +14,29 @@ ShellRoot {
 
     readonly property bool mockMode: Quickshell.env("QUICKGREET_MOCK") === "1"
 
+    // Backing out has to work while greetd is busy, which is exactly when
+    // it is most needed: a PAM stack can hold the conversation for a long
+    // time — a fingerprint read, a faillock delay — and the field is
+    // disabled throughout. Handling this only inside the field meant the
+    // key never arrived, leaving the watchdog as the only way out.
+    //
+    // Not called escape(): that is a legacy JavaScript global, and QML
+    // rejects it as a method name.
+    function dismiss(): void {
+        if (bottom.sessionsExpanded || card.userListOpen) {
+            bottom.sessionsExpanded = false;
+            card.closeLists();
+            return;
+        }
+        if (greetd.awaitingInput || greetd.busy) {
+            greetd.cancel();
+            auth.endPrompt();
+            auth.note("", false);
+        }
+        card.clearField();
+        card.grabFocus();
+    }
+
     FloatingWindow {
         id: win
 
@@ -88,19 +111,7 @@ ShellRoot {
                 grabFocus();
             }
 
-            onEscaped: {
-                if (bottom.sessionsExpanded || card.userListOpen) {
-                    bottom.sessionsExpanded = false;
-                    card.closeLists();
-                    return;
-                }
-                if (greetd.awaitingInput || greetd.busy) {
-                    greetd.cancel();
-                    auth.endPrompt();
-                    auth.note("", false);
-                }
-                card.clearField();
-            }
+            onEscaped: shell.dismiss()
         }
 
         BottomBar {
@@ -131,6 +142,13 @@ ShellRoot {
             // its layout gets captured during development.
             Component.onCompleted: if (Quickshell.env("QUICKGREET_OPEN") === "1")
                 sessionsExpanded = true
+        }
+
+        // Works whatever the field's state, unlike a handler inside it.
+        Shortcut {
+            sequences: ["Escape"]
+            context: Qt.WindowShortcut
+            onActivated: shell.dismiss()
         }
 
         Text {
