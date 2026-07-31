@@ -16,6 +16,10 @@ Row {
     property int count: 0
     property bool caretVisible: false
 
+    // Each character arrives as a different shape and resolves to a dot.
+    // Off gives plain circles.
+    property bool shapes: true
+
     spacing: 7
 
     // Pinned rather than derived from the children: the caret is taller
@@ -25,17 +29,26 @@ Row {
 
     // A real model, not the count itself. An integer model never emits
     // insert or remove signals, so the row's transitions would silently
-    // never run — the dots would appear and vanish instantly, exactly the
-    // behaviour this component exists to avoid.
+    // never run.
     ListModel {
         id: items
     }
 
+    // Position in the whole sequence rather than in the model, so the
+    // shape of a character does not change when an earlier one is deleted.
+    property int typed: 0
+
     onCountChanged: {
-        while (items.count < count)
-            items.append({});
+        while (items.count < count) {
+            items.append({
+                seq: typed
+            });
+            typed++;
+        }
         while (items.count > count && items.count > 0)
             items.remove(items.count - 1);
+        if (count === 0)
+            typed = 0;
     }
 
     AnimatedRow {
@@ -43,22 +56,25 @@ Row {
         height: parent.height
 
         model: items
-        itemWidth: 9
+        itemWidth: 11
         gap: 7
-
-        // Arriving dots rise into place from slightly ahead of the caret,
-        // which reads as the character being pushed in rather than
-        // appearing out of nowhere.
         travel: 6
-        fromScale: 0
+        jitter: 0.25
 
-        delegate: Rectangle {
+        delegate: MotionShape {
+            required property var model
+
             anchors.verticalCenter: parent ? parent.verticalCenter : undefined
 
-            width: 9
-            height: 9
-            radius: width / 2
+            width: 11
+            height: 11
             color: Colours.m3primary
+
+            kind: root.shapes ? kindFor(model.seq) : MotionShape.Circle
+            settlesToCircle: root.shapes
+            // Resolves as the second beat of the arrival lands, so the
+            // size change covers the swap.
+            settleDelay: 260
         }
     }
 
