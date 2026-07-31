@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QuickMotion
+import QuickMaterial
 
 // Session dropdown.
 //
@@ -61,9 +62,9 @@ Item {
         implicitWidth: buttonRow.implicitWidth + 28
         implicitHeight: 40
         radius: height / 2
-        color: root.expanded || buttonArea.containsMouse || root.activeFocus ? Colours.m3surfaceContainerHigh : Colours.m3surfaceContainer
+        color: root.expanded || buttonArea.containsMouse || root.activeFocus ? Colours.surfaceContainerHigh : Colours.surfaceContainer
         border.width: root.activeFocus ? 2 : 0
-        border.color: Colours.m3primary
+        border.color: Colours.primary
         opacity: 0.92
 
         Behavior on color {
@@ -80,12 +81,12 @@ Item {
                 text: "desktop_windows"
                 font.family: Config.iconFontFamily
                 font.pixelSize: 18
-                color: Colours.m3onSurfaceVariant
+                color: Colours.on.surfaceVariant
             }
 
             Text {
                 text: root.currentName
-                color: Colours.m3onSurface
+                color: Colours.on.surface
                 font.family: Config.fontFamily
                 font.pixelSize: 14
             }
@@ -94,7 +95,7 @@ Item {
                 text: "expand_more"
                 font.family: Config.iconFontFamily
                 font.pixelSize: 16
-                color: Colours.m3onSurfaceVariant
+                color: Colours.on.surfaceVariant
                 rotation: root.expanded ? 180 : 0
 
                 Behavior on rotation {
@@ -133,9 +134,9 @@ Item {
         implicitWidth: Math.max(button.width, listCol.implicitWidth + 16)
         implicitHeight: listCol.implicitHeight + 16
         radius: 16
-        color: Colours.m3surfaceContainerHigh
+        color: Colours.surfaceContainerHigh
         border.width: 1
-        border.color: Qt.alpha(Colours.m3outline, 0.3)
+        border.color: Qt.alpha(Colours.outline, 0.3)
 
         visible: opacity > 0
         opacity: root.expanded ? 1 : 0
@@ -210,7 +211,7 @@ Item {
                     implicitWidth: itemRow.implicitWidth + 24
                     implicitHeight: 38
                     radius: 12
-                    color: itemArea.containsMouse ? Colours.m3surfaceContainerHighest : "transparent"
+                    color: itemArea.containsMouse ? Colours.surfaceContainerHighest : "transparent"
 
                     Behavior on color {
                         ColourAnim {}
@@ -228,14 +229,14 @@ Item {
                             text: item.isCurrent ? "radio_button_checked" : "radio_button_unchecked"
                             font.family: Config.iconFontFamily
                             font.pixelSize: 16
-                            color: item.isCurrent ? Colours.m3primary : Colours.m3outline
+                            color: item.isCurrent ? Colours.primary : Colours.outline
                         }
 
                         // No elide and no fillWidth: the entry must report
                         // its natural width so the list can size to it.
                         Text {
                             text: item.modelData.name
-                            color: item.isCurrent ? Colours.m3primary : Colours.m3onSurface
+                            color: item.isCurrent ? Colours.primary : Colours.on.surface
                             font.family: Config.fontFamily
                             font.pixelSize: 13
                         }
@@ -246,7 +247,7 @@ Item {
 
                         Text {
                             text: item.modelData.type === "x11" ? "X11" : "Wayland"
-                            color: Colours.m3outline
+                            color: Colours.outline
                             font.family: Config.fontFamily
                             font.pixelSize: 11
                         }

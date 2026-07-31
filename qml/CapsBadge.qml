@@ -1,14 +1,15 @@
 import QtQuick
 import QtQuick.Layouts
+import QuickMaterial
 
 // Caps Lock chip. The caller only shows it when the state is known: an
 // indicator that is permanently negative because there is no LED to read
 // tells the user nothing and hides the fact that it is inoperative.
 Rectangle {
-    implicitWidth: row.implicitWidth + Style.pad.chip
-    implicitHeight: Style.dim.chip
+    implicitWidth: row.implicitWidth + 2 * Metrics.pad.chip
+    implicitHeight: Metrics.chip
     radius: height / 2
-    color: Qt.alpha(Colours.m3error, 0.18)
+    color: Qt.alpha(Colours.error, 0.18)
 
     RowLayout {
         id: row
@@ -18,15 +19,15 @@ Rectangle {
 
         Text {
             text: "keyboard_capslock"
-            font.family: Style.font.icons
+            font.family: Type.iconFamily
             font.pixelSize: 17
-            color: Colours.m3error
+            color: Colours.error
         }
 
         Text {
             text: "CAPS"
-            color: Colours.m3error
-            font.family: Style.font.sans
+            color: Colours.error
+            font.family: Type.family
             font.pixelSize: 12
             font.weight: Font.Medium
         }

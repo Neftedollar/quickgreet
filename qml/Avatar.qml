@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Effects
+import QuickMaterial
 
 // Round avatar, falling back to the account's initial.
 //
@@ -12,23 +13,21 @@ Item {
     property string source: ""
     property string initial: "?"
 
-    implicitWidth: Style.dim.avatar
-    implicitHeight: Style.dim.avatar
+    implicitWidth: Metrics.avatar.large
+    implicitHeight: Metrics.avatar.large
 
     Rectangle {
         id: circle
 
         anchors.fill: parent
         radius: width / 2
-        color: Colours.m3primaryContainer
+        color: Colours.primaryContainer
 
         Text {
             anchors.centerIn: parent
             text: root.initial.charAt(0).toUpperCase()
-            color: Colours.m3primary
-            font.family: Style.font.sans
-            font.pixelSize: Style.size.initial
-            font.weight: Font.Medium
+            color: Colours.primary
+            font: Type.headlineMedium
             visible: image.status !== Image.Ready
         }
     }
@@ -43,8 +42,8 @@ Item {
         visible: false
 
         // Decode no larger than it is drawn.
-        sourceSize.width: Style.dim.avatar * 2
-        sourceSize.height: Style.dim.avatar * 2
+        sourceSize.width: Metrics.avatar.large * 2
+        sourceSize.height: Metrics.avatar.large * 2
     }
 
     MultiEffect {

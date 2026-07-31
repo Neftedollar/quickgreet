@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import QuickMaterial
 
 // quickgreet — a greetd greeter built on Quickshell.
 //
@@ -11,6 +12,11 @@ import Quickshell
 // run ./test.sh for a mock mode that exercises the UI without logging in.
 ShellRoot {
     id: shell
+
+    // Touched so the singleton is constructed: nothing else references
+    // Theme, and a singleton nobody references is never created — the
+    // palette would silently stay at the library's defaults.
+    readonly property bool themed: Theme !== null
 
     readonly property bool mockMode: Quickshell.env("QUICKGREET_MOCK") === "1"
 
@@ -41,7 +47,7 @@ ShellRoot {
         id: win
 
         title: "quickgreet"
-        color: Colours.m3background
+        color: Colours.background
         visible: true
 
         implicitWidth: shell.mockMode ? 1280 : 1920
@@ -120,7 +126,7 @@ ShellRoot {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            anchors.margins: Style.pad.screen
+            anchors.margins: Metrics.pad.screen
             z: 2
 
             sessions: auth.sessions
@@ -158,9 +164,8 @@ ShellRoot {
             z: 3
             visible: shell.mockMode
             text: Strings.tr("mockNotice", Quickshell.env("MOCK_PASSWORD") || "test")
-            color: Colours.m3outline
-            font.family: Style.font.sans
-            font.pixelSize: Style.size.caption
+            color: Colours.outline
+            font: Type.labelSmall
         }
     }
 

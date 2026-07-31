@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QuickMotion
+import QuickMaterial
 
 // Active keyboard layout; click or Space to switch.
 //
@@ -16,12 +17,12 @@ Rectangle {
 
     signal cycle
 
-    implicitWidth: row.implicitWidth + Style.pad.chip
-    implicitHeight: Style.dim.chip
+    implicitWidth: row.implicitWidth + 2 * Metrics.pad.chip
+    implicitHeight: Metrics.chip
     radius: height / 2
     opacity: known ? 0.92 : 0.45
 
-    color: (area.containsMouse || root.activeFocus) && root.switchable ? Colours.m3surfaceContainerHigh : Colours.m3surfaceContainer
+    color: (area.containsMouse || root.activeFocus) && root.switchable ? Colours.surfaceContainerHigh : Colours.surfaceContainer
 
     activeFocusOnTab: switchable
 
@@ -44,17 +45,15 @@ Rectangle {
 
         Text {
             text: "keyboard"
-            font.family: Style.font.icons
+            font.family: Type.iconFamily
             font.pixelSize: 17
-            color: Colours.m3onSurfaceVariant
+            color: Colours.on.surfaceVariant
         }
 
         Text {
             text: root.layout
-            color: Colours.m3onSurface
-            font.family: Style.font.sans
-            font.pixelSize: Style.size.label
-            font.weight: Font.Medium
+            color: Colours.on.surface
+            font: Type.labelLarge
         }
     }
 

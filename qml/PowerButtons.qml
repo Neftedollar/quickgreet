@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QuickMotion
 import Quickshell.Io
+import QuickMaterial
 
 // Power controls for the login screen.
 //
@@ -26,7 +27,7 @@ RowLayout {
         implicitWidth: 36
         implicitHeight: 36
         radius: 18
-        color: area.containsMouse ? Colours.m3surfaceContainerHigh : "transparent"
+        color: area.containsMouse ? Colours.surfaceContainerHigh : "transparent"
 
         Behavior on color {
             ColourAnim {}
@@ -37,7 +38,7 @@ RowLayout {
             text: btn.icon
             font.family: Config.iconFontFamily
             font.pixelSize: 20
-            color: area.containsMouse ? Colours.m3onSurface : Colours.m3onSurfaceVariant
+            color: area.containsMouse ? Colours.on.surface : Colours.on.surfaceVariant
 
             Behavior on color {
                 ColourAnim {}
@@ -61,7 +62,7 @@ RowLayout {
             implicitWidth: tipText.implicitWidth + 16
             implicitHeight: 26
             radius: 8
-            color: Colours.m3surfaceContainerHighest
+            color: Colours.surfaceContainerHighest
 
             visible: opacity > 0
             opacity: area.containsMouse ? 1 : 0
@@ -77,7 +78,7 @@ RowLayout {
 
                 anchors.centerIn: parent
                 text: btn.tip
-                color: Colours.m3onSurface
+                color: Colours.on.surface
                 font.family: Config.fontFamily
                 font.pixelSize: 12
             }

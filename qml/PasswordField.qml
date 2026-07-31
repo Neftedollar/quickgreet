@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QuickMotion
+import QuickMaterial
 
 // The answer field.
 //
@@ -32,11 +33,11 @@ Rectangle {
         input.forceActiveFocus();
     }
 
-    implicitHeight: Style.dim.field
+    implicitHeight: Metrics.field
     radius: height / 2
-    color: Colours.m3surfaceContainerHigh
+    color: Colours.surfaceContainerHigh
     border.width: 2
-    border.color: input.activeFocus ? Colours.m3primary : "transparent"
+    border.color: input.activeFocus ? Colours.primary : "transparent"
 
     Behavior on border.color {
         ColourAnim {}
@@ -44,7 +45,7 @@ Rectangle {
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: Style.pad.field
+        anchors.leftMargin: Metrics.pad.field
         anchors.rightMargin: 10
         spacing: 4
 
@@ -59,9 +60,8 @@ Rectangle {
                 verticalAlignment: TextInput.AlignVCenter
                 echoMode: root.masked ? TextInput.Password : TextInput.Normal
                 passwordCharacter: "•"
-                color: root.masked ? "transparent" : Colours.m3onSurface
-                font.family: Style.font.sans
-                font.pixelSize: Style.size.body
+                color: root.masked ? "transparent" : Colours.on.surface
+                font: Type.bodyLarge
                 focus: true
                 enabled: !root.busy
                 selectByMouse: !root.masked
@@ -82,7 +82,7 @@ Rectangle {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: Strings.tr("password")
-                color: Colours.m3onSurfaceVariant
+                color: Colours.on.surfaceVariant
                 font: input.font
                 visible: input.text.length === 0 && !input.activeFocus && root.secret
             }
@@ -100,17 +100,17 @@ Rectangle {
         // state is actually known.
         Text {
             text: "keyboard_capslock_badge"
-            font.family: Style.font.icons
+            font.family: Type.iconFamily
             font.pixelSize: 20
-            color: Colours.m3error
+            color: Colours.error
             visible: root.capsLock
         }
 
         Text {
             text: root.reveal ? "visibility_off" : "visibility"
-            font.family: Style.font.icons
+            font.family: Type.iconFamily
             font.pixelSize: 19
-            color: revealArea.containsMouse ? Colours.m3onSurface : Colours.m3outline
+            color: revealArea.containsMouse ? Colours.on.surface : Colours.outline
             visible: input.text.length > 0 && root.secret
 
             Behavior on color {
@@ -140,9 +140,9 @@ Rectangle {
             Text {
                 anchors.centerIn: parent
                 text: "arrow_forward"
-                font.family: Style.font.icons
-                font.pixelSize: Style.size.iconLarge
-                color: input.text.length > 0 ? Colours.m3primary : Colours.m3outline
+                font.family: Type.iconFamily
+                font.pixelSize: Metrics.icon.medium
+                color: input.text.length > 0 ? Colours.primary : Colours.outline
                 visible: !root.busy
                 width: 28
                 horizontalAlignment: Text.AlignHCenter
@@ -160,9 +160,9 @@ Rectangle {
 
                 anchors.centerIn: parent
                 text: "progress_activity"
-                font.family: Style.font.icons
-                font.pixelSize: Style.size.iconLarge
-                color: Colours.m3primary
+                font.family: Type.iconFamily
+                font.pixelSize: Metrics.icon.medium
+                color: Colours.primary
                 visible: root.busy
                 width: 28
                 horizontalAlignment: Text.AlignHCenter

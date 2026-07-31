@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QuickMotion
+import QuickMaterial
 
 // The card: who is logging in, what PAM is asking, and the answer field.
 //
@@ -48,12 +49,12 @@ Rectangle {
 
     function forwardKey(event: var): void {}
 
-    implicitWidth: Style.dim.card
+    implicitWidth: Metrics.dialogWidth
     implicitHeight: column.implicitHeight + 44
-    radius: Style.radius.card
-    color: Colours.m3surfaceContainer
+    radius: Shape.extraLarge
+    color: Colours.surfaceContainer
     border.width: 1
-    border.color: Qt.alpha(Colours.m3outline, 0.25)
+    border.color: Qt.alpha(Colours.outline, 0.25)
 
     opacity: 0
     scale: 0.96
@@ -93,7 +94,7 @@ Rectangle {
         id: column
 
         anchors.centerIn: parent
-        width: parent.width - 2 * Style.pad.card
+        width: parent.width - 2 * Metrics.pad.card
         spacing: 16
 
         Avatar {
@@ -117,9 +118,8 @@ Rectangle {
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.WordWrap
             text: root.promptText
-            color: Colours.m3onSurfaceVariant
-            font.family: Style.font.sans
-            font.pixelSize: Style.size.label
+            color: Colours.on.surfaceVariant
+            font: Type.labelLarge
             visible: text.length > 0
         }
 
@@ -139,11 +139,10 @@ Rectangle {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.WordWrap
-            font.family: Style.font.sans
-            font.pixelSize: Style.size.label
+            font: Type.labelLarge
 
             text: root.message
-            color: root.messageIsError ? Colours.m3error : Colours.m3onSurfaceVariant
+            color: root.messageIsError ? Colours.error : Colours.on.surfaceVariant
             opacity: text.length > 0 ? 1 : 0
 
             Behavior on opacity {

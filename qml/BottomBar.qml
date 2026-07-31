@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QuickMaterial
 
 // Session picker on the left, keyboard state and power on the right.
 Item {
@@ -51,7 +52,7 @@ Item {
             Layout.rightMargin: 4
             implicitWidth: 1
             implicitHeight: 22
-            color: Qt.alpha(Colours.m3outline, 0.4)
+            color: Qt.alpha(Colours.outline, 0.4)
             visible: Config.showPowerButtons
         }
 

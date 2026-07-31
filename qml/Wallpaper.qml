@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Effects
+import QuickMaterial
 
 // Blurred, dimmed wallpaper, or a flat colour when there is no usable
 // image. Self-contained: it reads its own settings and reports nothing.
@@ -40,7 +41,7 @@ Item {
     // background when there is no image to dim.
     Rectangle {
         anchors.fill: parent
-        color: Colours.m3background
+        color: Colours.background
         opacity: image.status === Image.Ready ? Config.dim : 1
     }
 }

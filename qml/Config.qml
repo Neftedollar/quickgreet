@@ -49,6 +49,11 @@ Singleton {
 
     // Both are hard requirements that not every distribution packages
     // conveniently, so they are configurable rather than compiled in.
+    // Which built-in QuickMaterial scheme to start from. Anything the
+    // scheme file supplies is applied over the top, so this is what shows
+    // on a machine with no scheme file at all.
+    property string theme: "slate"
+
     property string fontFamily: "Rubik"
     property string iconFontFamily: "Material Symbols Rounded"
 
@@ -58,7 +63,7 @@ Singleton {
     // Only these may be set from the file. Assigning to anything else —
     // a readonly property, or an internal flag like `ready` — throws out
     // of the assignment loop and silently drops every remaining key.
-    readonly property var settable: ["locale", "wallpaper", "blur", "dim", "schemePath", "defaultSession", "defaultUser", "showPowerButtons", "timeFormat", "dateFormat", "fontFamily", "iconFontFamily", "timeoutSeconds"]
+    readonly property var settable: ["locale", "wallpaper", "blur", "dim", "theme", "schemePath", "defaultSession", "defaultUser", "showPowerButtons", "timeFormat", "dateFormat", "fontFamily", "iconFontFamily", "timeoutSeconds"]
 
     // ─────────────────────── install layout ───────────────────────
 

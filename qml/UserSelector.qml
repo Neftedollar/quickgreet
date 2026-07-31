@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QuickMotion
+import QuickMaterial
 
 // The account name, and a list to change it when there is more than one.
 //
@@ -50,9 +51,9 @@ ColumnLayout {
             implicitHeight: parent.height
 
             radius: height / 2
-            color: nameArea.containsMouse && root.selectable ? Colours.m3surfaceContainerHigh : "transparent"
+            color: nameArea.containsMouse && root.selectable ? Colours.surfaceContainerHigh : "transparent"
             border.width: nameRow.activeFocus ? 2 : 0
-            border.color: Colours.m3primary
+            border.color: Colours.primary
 
             Behavior on color {
                 ColourAnim {}
@@ -67,17 +68,15 @@ ColumnLayout {
 
             Text {
                 text: root.displayName
-                color: Colours.m3onSurface
-                font.family: Style.font.sans
-                font.pixelSize: Style.size.title
-                font.weight: Font.Medium
+                color: Colours.on.surface
+                font: Type.titleLarge
             }
 
             Text {
                 text: "expand_more"
-                font.family: Style.font.icons
-                font.pixelSize: Style.size.icon
-                color: Colours.m3onSurfaceVariant
+                font.family: Type.iconFamily
+                font.pixelSize: Metrics.icon.small
+                color: Colours.on.surfaceVariant
                 visible: root.selectable
                 rotation: root.open ? 180 : 0
 
@@ -113,8 +112,8 @@ ColumnLayout {
 
         visible: Layout.preferredHeight > 0
         clip: true
-        radius: Style.radius.panel
-        color: Colours.m3surfaceContainerHigh
+        radius: Shape.large
+        color: Colours.surfaceContainerHigh
 
         Behavior on Layout.preferredHeight {
             Anim {
@@ -141,9 +140,9 @@ ColumnLayout {
                     readonly property bool current: index === root.currentIndex
 
                     Layout.fillWidth: true
-                    implicitHeight: Style.dim.rowSmall
-                    radius: Style.radius.itemSmall
-                    color: area.containsMouse || item.activeFocus ? Colours.m3surfaceContainerHighest : "transparent"
+                    implicitHeight: Metrics.listItemDense
+                    radius: Shape.small
+                    color: area.containsMouse || item.activeFocus ? Colours.surfaceContainerHighest : "transparent"
 
                     activeFocusOnTab: root.open
 
@@ -156,14 +155,13 @@ ColumnLayout {
 
                     Text {
                         anchors.left: parent.left
-                        anchors.leftMargin: Style.pad.item
+                        anchors.leftMargin: Metrics.pad.listItem
                         anchors.right: parent.right
-                        anchors.rightMargin: Style.pad.item
+                        anchors.rightMargin: Metrics.pad.listItem
                         anchors.verticalCenter: parent.verticalCenter
                         text: item.modelData.realname
-                        color: item.current ? Colours.m3primary : Colours.m3onSurface
-                        font.family: Style.font.sans
-                        font.pixelSize: Style.size.label
+                        color: item.current ? Colours.primary : Colours.on.surface
+                        font: Type.labelLarge
                         elide: Text.ElideRight
                     }
 

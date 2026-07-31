@@ -1,5 +1,6 @@
 import QtQuick
 import QuickMotion
+import QuickMaterial
 
 // Stand-in for masked text.
 //
@@ -68,7 +69,7 @@ Row {
 
             width: 11
             height: 11
-            color: Colours.m3primary
+            color: Colours.primary
 
             kind: root.shapes ? kindFor(model.seq) : MotionShape.Circle
             settlesToCircle: root.shapes
@@ -88,7 +89,7 @@ Row {
         width: 2
         height: 17
         radius: 1
-        color: Colours.m3primary
+        color: Colours.primary
         visible: root.caretVisible
 
         Blink {
