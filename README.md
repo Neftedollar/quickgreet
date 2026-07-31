@@ -3,14 +3,34 @@
 A [greetd](https://sr.ht/~kennylevinsen/greetd/) greeter built on
 [Quickshell](https://quickshell.org), styled after Material 3.
 
-Wallpaper background with configurable blur, per-user avatars, a session
-picker, live keyboard layout and Caps Lock indicators, and power controls.
-Colours are read from a Material You style scheme file, so the login screen
-can match the desktop it leads into.
+![quickgreet](assets/screenshot.png)
 
-Authentication is a full PAM conversation, not a single password exchange:
-second factors, expired-password changes and PAM's own messages all work.
-Everything is reachable from the keyboard. Fifteen languages.
+[![licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+![no runtime dependencies beyond Qt and python3](https://img.shields.io/badge/deps-quickshell%20%2B%20python3-lightgrey.svg)
+
+Colours are read from a Material You scheme, so the login screen matches
+the desktop it leads into — generate one from your own wallpaper, or drop
+in the scheme your shell already produces.
+
+**Authentication is a full PAM conversation**, not a single password
+exchange. Second factors, expired-password changes and PAM's own messages
+all work, because every prompt PAM sends is shown and answered rather than
+assumed away.
+
+- Wallpaper background with configurable blur and dimming
+- Session picker, per-user avatars, real names from GECOS
+- Live keyboard layout and Caps Lock indicators — and it says `--` rather
+  than guessing when the compositor will not tell it
+- Suspend, restart and shut down
+- Fully operable from the keyboard, because a login screen has to be
+- Fifteen languages, one object per language
+
+<details>
+<summary>Session picker</summary>
+
+![session picker](assets/sessions.png)
+
+</details>
 
 ## Status
 
@@ -36,7 +56,7 @@ yay -S quickshell-git ttf-material-symbols-variable ttf-rubik-vf
 ## Install
 
 ```sh
-git clone https://github.com/USER/quickgreet
+git clone https://github.com/Neftedollar/quickgreet
 cd quickgreet
 sudo ./install.sh
 ```

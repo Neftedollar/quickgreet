@@ -4,7 +4,7 @@ pkgver=0.1.0
 pkgrel=1
 pkgdesc="A greetd greeter built on Quickshell, styled after Material 3"
 arch=('any')
-url="https://github.com/USER/quickgreet"
+url="https://github.com/Neftedollar/quickgreet"
 license=('MIT')
 depends=(
     'greetd'
