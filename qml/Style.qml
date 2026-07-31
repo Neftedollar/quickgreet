@@ -54,7 +54,6 @@ Singleton {
         readonly property int intro: 420
         readonly property int shake: 55
         readonly property int blink: 480
-        readonly property int spin: 900
     }
 
     readonly property QtObject pad: QtObject {

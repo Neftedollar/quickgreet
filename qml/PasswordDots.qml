@@ -91,22 +91,9 @@ Row {
         color: Colours.m3primary
         visible: root.caretVisible
 
-        SequentialAnimation on opacity {
+        Blink {
+            target: caret
             running: caret.visible
-            loops: Animation.Infinite
-
-            NumberAnimation {
-                to: 0
-                duration: Motion.dur.slowEffects
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: Motion.curve.effects
-            }
-            NumberAnimation {
-                to: 1
-                duration: Motion.dur.slowEffects
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: Motion.curve.effects
-            }
         }
     }
 }

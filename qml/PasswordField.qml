@@ -168,12 +168,9 @@ Rectangle {
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
 
-                RotationAnimation on rotation {
+                Spin {
+                    target: spinner
                     running: spinner.visible
-                    loops: Animation.Infinite
-                    from: 0
-                    to: 360
-                    duration: Style.dur.spin
                 }
             }
         }
