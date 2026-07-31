@@ -24,20 +24,31 @@ RowLayout {
         required property string tip
         required property var action
 
-        implicitWidth: 36
-        implicitHeight: 36
-        radius: 18
-        color: area.containsMouse ? Colours.surfaceContainerHigh : "transparent"
+        // The icon-button size from the specification, with the 48 target
+        // it also specifies — the button was 36 with no expanded hit area,
+        // twelve pixels under the accessibility floor.
+        implicitWidth: Metrics.button
+        implicitHeight: Metrics.button
+        radius: Corner.full(height)
+        color: "transparent"
 
-        Behavior on color {
-            ColourAnim {}
+        // A state layer rather than a colour swap. This control has no
+        // container of its own, so swapping one in on hover flashed a
+        // filled rectangle out of nothing; a translucent film over
+        // transparency is simply a faint tint, which is what was meant.
+        StateLayer {
+            anchors.fill: parent
+            rounding: parent.radius
+            colour: Colours.on.surface
+            hovered: area.containsMouse
+            focused: btn.activeFocus
         }
 
         Text {
             anchors.centerIn: parent
             text: btn.icon
-            font.family: Config.iconFontFamily
-            font.pixelSize: 20
+            font.family: Type.iconFamily
+            font.pixelSize: Metrics.icon.medium
             color: area.containsMouse ? Colours.on.surface : Colours.on.surfaceVariant
 
             Behavior on color {
