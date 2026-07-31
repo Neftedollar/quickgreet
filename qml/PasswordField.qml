@@ -63,6 +63,13 @@ Rectangle {
                 color: root.masked ? "transparent" : Colours.on.surface
                 font: Type.bodyLarge
                 focus: true
+
+                // TextInput defaults this to false, so the password field
+                // was reachable at startup and never again: Tab moved on to
+                // the layout badge and the session picker, and nothing
+                // brought it back. On a login screen the one control that
+                // must always be reachable from the keyboard is this one.
+                activeFocusOnTab: !root.busy
                 enabled: !root.busy
                 selectByMouse: !root.masked
                 cursorVisible: !root.masked && activeFocus

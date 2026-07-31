@@ -24,6 +24,18 @@ RowLayout {
         required property string tip
         required property var action
 
+        // Reachable from the keyboard. These were outside the tab chain
+        // entirely, so shutting down or rebooting from a login screen
+        // needed a pointer.
+        activeFocusOnTab: true
+
+        Keys.onPressed: event => {
+            if (event.key === Qt.Key_Space || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                btn.action();
+                event.accepted = true;
+            }
+        }
+
         // The icon-button size from the specification, with the 48 target
         // it also specifies — the button was 36 with no expanded hit area,
         // twelve pixels under the accessibility floor.
