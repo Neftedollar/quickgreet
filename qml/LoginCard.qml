@@ -81,32 +81,12 @@ Rectangle {
         }
     }
 
-    // horizontalCenterOffset is the property to animate: the card is
-    // positioned with anchors, so animating x while centerIn is active
-    // does nothing at all.
-    SequentialAnimation {
+    // Anchored, so the shake moves the offset rather than x: animating x
+    // while centreIn is active does nothing at all, silently.
+    Shake {
         id: shake
 
-        loops: 2
-
-        NumberAnimation {
-            target: root
-            property: "anchors.horizontalCenterOffset"
-            to: -9
-            duration: Style.dur.shake
-        }
-        NumberAnimation {
-            target: root
-            property: "anchors.horizontalCenterOffset"
-            to: 9
-            duration: Style.dur.shake
-        }
-        NumberAnimation {
-            target: root
-            property: "anchors.horizontalCenterOffset"
-            to: 0
-            duration: Style.dur.shake
-        }
+        target: root
     }
 
     ColumnLayout {
