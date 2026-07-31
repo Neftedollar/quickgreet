@@ -175,6 +175,32 @@ Item {
 
                     readonly property bool isCurrent: index === root.currentIndex
 
+                    // Entries arrive one after another rather than all at
+                    // once: a list that appears whole reads as a block,
+                    // the same list filling reads as a list.
+                    Stagger {
+                        id: cascade
+
+                        index: item.index
+                    }
+
+                    opacity: 0
+                    Component.onCompleted: appear.start()
+
+                    SequentialAnimation {
+                        id: appear
+
+                        PauseAnimation {
+                            duration: cascade.delay
+                        }
+                        Anim {
+                            target: item
+                            property: "opacity"
+                            to: 1
+                            role: Motion.Fade
+                        }
+                    }
+
                     Layout.fillWidth: true
 
                     // Required: the RowLayout below is stretched with
