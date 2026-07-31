@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QuickMotion
 
 // Active keyboard layout; click or Space to switch.
 //
@@ -32,9 +33,7 @@ Rectangle {
     }
 
     Behavior on color {
-        ColorAnimation {
-            duration: Style.dur.quick
-        }
+        ColourAnim {}
     }
 
     RowLayout {

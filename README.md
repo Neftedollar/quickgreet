@@ -66,6 +66,7 @@ exists so that a bug here costs you a reboot, not an afternoon.
 
 - `greetd`
 - `quickshell` — the git build; tagged releases are too old
+- [`quickmotion`](https://github.com/Neftedollar/quickmotion) — the motion module
 - `python3` — for the protocol bridge and the session/user enumerators
 - `Hyprland` — as the greeter's compositor (see [Why Hyprland](#why-hyprland))
 - Fonts: **Rubik** and **Material Symbols Rounded**

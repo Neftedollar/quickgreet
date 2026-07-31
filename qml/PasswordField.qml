@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QuickMotion
 
 // The answer field.
 //
@@ -38,9 +39,7 @@ Rectangle {
     border.color: input.activeFocus ? Colours.m3primary : "transparent"
 
     Behavior on border.color {
-        ColorAnimation {
-            duration: Style.dur.quick
-        }
+        ColourAnim {}
     }
 
     RowLayout {
@@ -115,9 +114,7 @@ Rectangle {
             visible: input.text.length > 0 && root.secret
 
             Behavior on color {
-                ColorAnimation {
-                    duration: Style.dur.quick
-                }
+                ColourAnim {}
             }
 
             MouseArea {

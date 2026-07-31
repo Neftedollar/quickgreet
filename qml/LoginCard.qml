@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QuickMotion
 
 // The card: who is logging in, what PAM is asking, and the answer field.
 //
@@ -61,23 +62,22 @@ Rectangle {
     ParallelAnimation {
         id: intro
 
-        NumberAnimation {
+        Anim {
             target: root
             property: "opacity"
             from: 0
             to: 1
-            duration: Style.dur.intro
-            easing.type: Easing.OutCubic
+            role: Motion.Fade
         }
 
-        NumberAnimation {
+        // Reveal already overshoots: the curve carries the settle that
+        // OutBack's overshoot parameter used to approximate by hand.
+        Anim {
             target: root
             property: "scale"
             from: 0.96
             to: 1
-            duration: Style.dur.intro
-            easing.type: Easing.OutBack
-            easing.overshoot: 0.7
+            role: Motion.Reveal
         }
     }
 
@@ -167,9 +167,9 @@ Rectangle {
             opacity: text.length > 0 ? 1 : 0
 
             Behavior on opacity {
-                NumberAnimation {
-                    duration: Style.dur.quick
-                }
+                Anim {
+            role: Motion.Fade
+        }
             }
         }
     }

@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QuickMotion
 import Quickshell.Io
 
 // Power controls for the login screen.
@@ -28,9 +29,7 @@ RowLayout {
         color: area.containsMouse ? Colours.m3surfaceContainerHigh : "transparent"
 
         Behavior on color {
-            ColorAnimation {
-                duration: 150
-            }
+            ColourAnim {}
         }
 
         Text {
@@ -41,9 +40,7 @@ RowLayout {
             color: area.containsMouse ? Colours.m3onSurface : Colours.m3onSurfaceVariant
 
             Behavior on color {
-                ColorAnimation {
-                    duration: 150
-                }
+                ColourAnim {}
             }
         }
 
@@ -70,8 +67,8 @@ RowLayout {
             opacity: area.containsMouse ? 1 : 0
 
             Behavior on opacity {
-                NumberAnimation {
-                    duration: 150
+                Anim {
+                    role: Motion.Fade
                 }
             }
 

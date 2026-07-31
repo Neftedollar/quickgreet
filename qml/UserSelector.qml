@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QuickMotion
 
 // The account name, and a list to change it when there is more than one.
 //
@@ -54,9 +55,7 @@ ColumnLayout {
             border.color: Colours.m3primary
 
             Behavior on color {
-                ColorAnimation {
-                    duration: Style.dur.quick
-                }
+                ColourAnim {}
             }
         }
 
@@ -83,9 +82,9 @@ ColumnLayout {
                 rotation: root.open ? 180 : 0
 
                 Behavior on rotation {
-                    NumberAnimation {
-                        duration: Style.dur.quick
-                    }
+                    Anim {
+            role: Motion.Fade
+        }
                 }
             }
         }
@@ -118,10 +117,9 @@ ColumnLayout {
         color: Colours.m3surfaceContainerHigh
 
         Behavior on Layout.preferredHeight {
-            NumberAnimation {
-                duration: Style.dur.quick
-                easing.type: Easing.OutCubic
-            }
+            Anim {
+            role: Motion.Resize
+        }
         }
 
         ColumnLayout {

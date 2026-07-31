@@ -1,4 +1,5 @@
 import QtQuick
+import QuickMotion
 import QtQuick.Layouts
 
 // Time and date. Owns its own tick, so nothing outside has to remember to
@@ -45,14 +46,13 @@ ColumnLayout {
         onTriggered: now = new Date()
     }
 
-    NumberAnimation {
+    Anim {
         id: intro
 
         target: root
         property: "opacity"
         from: 0
         to: 1
-        duration: 500
-        easing.type: Easing.OutCubic
+        role: Motion.Fade
     }
 }

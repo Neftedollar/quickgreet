@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QuickMotion
 
 // Session dropdown.
 //
@@ -66,9 +67,7 @@ Item {
         opacity: 0.92
 
         Behavior on color {
-            ColorAnimation {
-                duration: 150
-            }
+            ColourAnim {}
         }
 
         RowLayout {
@@ -99,9 +98,8 @@ Item {
                 rotation: root.expanded ? 180 : 0
 
                 Behavior on rotation {
-                    NumberAnimation {
-                        duration: 150
-                        easing.type: Easing.OutCubic
+                    Anim {
+                        role: Motion.Resize
                     }
                 }
             }
@@ -145,16 +143,14 @@ Item {
         transformOrigin: Item.Bottom
 
         Behavior on opacity {
-            NumberAnimation {
-                duration: 140
-                easing.type: Easing.OutCubic
+            Anim {
+                role: Motion.Fade
             }
         }
 
         Behavior on scale {
-            NumberAnimation {
-                duration: 140
-                easing.type: Easing.OutCubic
+            Anim {
+                role: Motion.Reveal
             }
         }
 
@@ -191,9 +187,7 @@ Item {
                     color: itemArea.containsMouse ? Colours.m3surfaceContainerHighest : "transparent"
 
                     Behavior on color {
-                        ColorAnimation {
-                            duration: 120
-                        }
+                        ColourAnim {}
                     }
 
                     RowLayout {
