@@ -1,0 +1,77 @@
+name: Bug report
+description: Something is broken, looks wrong, or stopped you logging in
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A greeter fails in places you cannot screenshot, so the logs matter
+        more than usual. If it left you unable to log in, say so — that goes
+        to the front of the queue.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what you got instead.
+      placeholder: |
+        Entered my password, the card shook and the field went dead.
+        Had to switch to a text console.
+    validations:
+      required: true
+
+  - type: textarea
+    id: log
+    attributes:
+      label: Compositor log
+      description: |
+        `/var/log/quickgreet.log` — the greeter's own output. Redact
+        anything you would not want public; there should be no secrets in
+        it, and if there are, that is itself the bug.
+      render: text
+
+  - type: textarea
+    id: greetd
+    attributes:
+      label: greetd journal
+      description: "`journalctl -b -u greetd` or the output of the greetd you ran by hand."
+      render: text
+
+  - type: input
+    id: distro
+    attributes:
+      label: Distribution
+      placeholder: Arch, NixOS 24.11, Fedora 41, …
+    validations:
+      required: true
+
+  - type: input
+    id: compositor
+    attributes:
+      label: Compositor running the greeter
+      description: What `QUICKGREET_COMPOSITOR` is set to, or Hyprland if you did not change it.
+      placeholder: Hyprland 0.56.1
+
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: quickgreet, quickshell and greetd.
+      placeholder: quickgreet 0.1.0, quickshell-git 0.3.0.r19, greetd 0.10.3
+
+  - type: dropdown
+    id: mock
+    attributes:
+      label: Does it reproduce in mock mode?
+      description: "`./test.sh` runs the whole UI against a simulated greetd, with no real login. `MOCK_SCENARIO` picks the conversation."
+      options:
+        - Have not tried
+        - "Yes, reproduces with ./test.sh"
+        - "No, only with real greetd"
+
+  - type: checkboxes
+    id: lockout
+    attributes:
+      label: Severity
+      options:
+        - label: This prevented me from logging in

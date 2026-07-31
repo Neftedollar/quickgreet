@@ -5,6 +5,7 @@ A [greetd](https://sr.ht/~kennylevinsen/greetd/) greeter built on
 
 ![quickgreet](assets/screenshot.png)
 
+[![status: beta](https://img.shields.io/badge/status-beta-orange.svg)](#status)
 [![licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
 ![no runtime dependencies beyond Qt and python3](https://img.shields.io/badge/deps-quickshell%20%2B%20python3-lightgrey.svg)
 
@@ -34,9 +35,32 @@ assumed away.
 
 ## Status
 
-Working and in daily use, but young. The protocol layer is complete
-(authentication, session selection, cancellation); expect rough edges
-elsewhere. Issues and patches welcome.
+**Beta.** It works, and it has been reviewed harder than it has been used.
+This is a login screen, so it is worth being precise about which of those
+applies to what.
+
+Verified by hand on one machine: rendering, PAM authentication, session
+selection, handing over to a Plasma session, keyboard-only operation,
+the layout and Caps Lock indicators.
+
+Verified only against a simulated greetd: second factors, expired-password
+changes, informational and error prompts, timeouts, a dropped connection.
+The scenarios are in `MOCK_SCENARIO` and reproduce the exact message kinds
+involved, but no real PAM stack has driven them yet.
+
+Not verified at all: anything on a distribution other than Arch, any
+compositor other than Hyprland, more than one user account, more than one
+monitor.
+
+**Bugs are very welcome** — especially the boring ones. A greeter fails in
+places nobody can screenshot, so a report that says "black screen after
+the password, here is `/var/log/quickgreet.log`" is worth more than it
+looks. If it left you unable to log in, say so plainly and it goes to the
+front of the queue.
+
+Before switching your display manager over, read
+[Switching over](#switching-over) and test on a spare VT. That procedure
+exists so that a bug here costs you a reboot, not an afternoon.
 
 ## Requirements
 
